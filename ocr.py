@@ -17,6 +17,7 @@
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 
 import os
+# Do not import everything as Template is defined in string too
 from string import lower
 import codecs
 import tempfile
@@ -48,6 +49,7 @@ class Ocr:
 		output = []
 		# Output example line: "w 116 1724 133 1736"
 		# Coordinates start at bottom left corner but we convert this into top left.
+		# Convert pixel coordinates into millimeters too.
 		for x in input.split('\n'):
 			if not x:
 				continue
@@ -61,6 +63,11 @@ class Ocr:
 
 			c = Character()
 			c.character = line[0] 
+
+			x1 = float(x1) / self.dotsPerMillimeterX
+			width = float(width) / self.dotsPerMillimeterX
+			y2 = float(y2) / self.dotsPerMillimeterY
+			height = float(height) / self.dotsPerMillimeterY
 			c.box = QRectF( x1, y2, width, height )
 			output.append( c )
 		return output
@@ -89,13 +96,11 @@ class Ocr:
 		onebit.save_tiff(output)
 		
 	def scan(self, file):
-		# Loading
-		image = load_image(file)
-		self.width = image.data.ncols 
-		self.height = image.data.nrows
-		info = image_info(file)
-		self.xResolution = info.x_resolution
-		self.yResolution = info.y_resolution
+		image = QImage( file )
+		self.width = image.width()
+		self.height = image.height()
+		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
+		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 		
 		self.convertToBinary(file, '/tmp/tmp.tif')
 		#self.convertIntoValidInput(file, '/tmp/tmp.tif')
@@ -107,5 +112,4 @@ class Ocr:
 
 def initOcrSystem():
 	init_gamera()
-
 

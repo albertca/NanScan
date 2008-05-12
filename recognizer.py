@@ -77,11 +77,13 @@ class Recognizer(QObject):
 		
 	# Synchronous: Returns the types of analyzers available
 	def scan(self, file):
+		self.fileName = file
 		self.barcode.scan( file )
 		self.ocr.scan( file )
 
 	# Asynchronous: Starts analyzers in background threads. Emits finished() at the end
 	def startScan(self, file):
+		self.fileName = file
 		self.ocrThread = Analyze( self.ocr, file, self )
 		self.barcodeThread = Analyze( self.barcode, file, self )
 		self.connect( self.ocrThread, SIGNAL('finished()'), self.scanFinished )

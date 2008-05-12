@@ -17,6 +17,9 @@
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 
 from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+# Do not import everything as Template is defined in string too
+from string import lower
 import os
 import tempfile
 
@@ -50,10 +53,13 @@ class Barcode:
 		for line in content.splitlines():
 			pieces = line.split( ' ' )
 			box = Box()
-			box.text = pieces[0]
+			box.text = lower(pieces[0])
 			box.type = pieces[2]
 			pos = pieces[4].strip( '()]' ).split(',')
-			box.position = QPointF( float(pos[0]), float(pos[1]))
+
+			x = float(pos[0]) / self.dotsPerMillimeterX
+			y = float(pos[1]) / self.dotsPerMillimeterY
+			box.position = QPointF( x, y )
 			self.boxes.append( box )
 
 	def printBoxes(self):
@@ -64,12 +70,18 @@ class Barcode:
 		for x in self.boxes:
 			if region.contains(x.position):
 				return unicode(x.text)
-		# We always return unicode strings
+		# Always return unicode strings
 		return u''
 
 	def scan(self, file):
 		# Clean boxes so scan() can be called more than once
 		self.boxes = []
+
+		# Obtain image resolution
+		image = QImage( file )
+		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
+		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
+
 		command = '/home/albert/d/git/exact-image-0.5.0/objdir/frontends/bardecode'
 		content = self.spawn( command, file )
 		self.parseBardecodeOutput( content )
