@@ -95,6 +95,7 @@ class SynchronousScanner(QObject):
 		twain.GlobalHandleFree(handle)
 		return QImage( fileName )
 	
+	# Member of SynchronousScanner Interface
 	def close(self):
 		del self.manager
 

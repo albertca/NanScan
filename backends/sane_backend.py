@@ -16,10 +16,12 @@
 #   Free Software Foundation, Inc.,
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 import sane
 # PIL Module to convert PIL Image Object to QImage
 import ImageQt
-from common import *
+import common
 
 class SynchronousScanner(QObject):
 
@@ -32,7 +34,7 @@ class SynchronousScanner(QObject):
 	def listDevices(self):
 		# sane.get_devices() returns an structure like the following
 		# [('epson:libusb:001:004', 'Epson', 'GT-8300', 'flatbed scanner')]
-		[x[0] for x in sane.get_devices()]
+		return [x[0] for x in sane.get_devices()]
 
 	# Member of SynchronousScanner Interface
 	def setResolution(self, value):
@@ -43,31 +45,42 @@ class SynchronousScanner(QObject):
 		if not name:
 			devices = self.listDevices()
 			if not devices:
-				self.emit( SIGNAL('error(int)'), ScannerError.NoDeviceFound )
+				self.emit( SIGNAL('error(int)'), common.ScannerError.NoDeviceFound )
 				return
 			name = devices[0]
 
 		try:
+			print "Trying to open device: ", name
 			source = sane.open( name )
+			print "opened ", name
 		except:
-			self.emit( SIGNAL('error(int)'), ScannerError.CouldNotOpenDevice )
+			print "error", name
+			self.emit( SIGNAL('error(int)'), common.ScannerError.CouldNotOpenDevice )
 			return
 			
 		source.mode = 'color'
 		source.resolution = self.resolution
 		source.depth = 32
 
+		print "Multi scan"
 		iterator = source.multi_scan()
+		print "yea scan"
 		while True:
 			try:
+				print "Obtaining image..."
 				image = ImageQt.ImageQt( iterator.next() )
+				print "Obtain"
 				self.emit( SIGNAL('scanned(QImage)'), image )
 			except StopIteration, e:
 				# If StopIteration is raised, then there are no more images in 
 				# the scanner
 				pass
 			except:
-				self.emit( SIGNAL('error(int)'), ScannerError.AcquisitionError )
+				self.emit( SIGNAL('error(int)'), common.ScannerError.AcquisitionError )
+
+	# Member of SynchronousScanner Interface
+	def close(self):
+		pass
 				
 				
-ScannerBackend = SynchronousScanner
+common.ScannerBackend = SynchronousScanner
