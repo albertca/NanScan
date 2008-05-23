@@ -16,9 +16,4 @@
 #   Free Software Foundation, Inc.,
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 
-from ocr import *
-from barcode import *
-from document import *
-from template import *
-from recognizer import *
 
