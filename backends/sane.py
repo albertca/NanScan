@@ -19,36 +19,31 @@
 import sane
 # PIL Module to convert PIL Image Object to QImage
 import ImageQt
-from common import *
+from errors import *
 
-class SynchronousScanner(QObject):
+class Scanner(QObject):
 
 	def __init__(self, parent=None):
 		QObject.__init__(self, parent)
 		sane.init()
 		self.resolution = 300
 	
-	# Member of SynchronousScanner Interface
 	def listDevices(self):
 		# sane.get_devices() returns an structure like the following
 		# [('epson:libusb:001:004', 'Epson', 'GT-8300', 'flatbed scanner')]
 		[x[0] for x in sane.get_devices()]
 
-	# Member of SynchronousScanner Interface
 	def setResolution(self, value):
 		self.resolution = value
 
-	# Member of SynchronousScanner Interface
-	def scan(self, name=None):
-		if not name:
-			devices = self.listDevices()
-			if not devices:
-				self.emit( SIGNAL('error(int)'), ScannerError.NoDeviceFound )
-				return
-			name = devices[0]
+	def startScan(self):
+		devices = self.listDevices()
+		if not devices:
+			self.emit( SIGNAL('error(int)'), ScannerError.NoDeviceFound )
+			return
 
 		try:
-			source = sane.open( name )
+			source = sane.open( devices[0] )
 		except:
 			self.emit( SIGNAL('error(int)'), ScannerError.CouldNotOpenDevice )
 			return
@@ -70,4 +65,4 @@ class SynchronousScanner(QObject):
 				self.emit( SIGNAL('error(int)'), ScannerError.AcquisitionError )
 				
 				
-ScannerBackend = SynchronousScanner
+

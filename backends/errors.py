@@ -15,10 +15,10 @@
 #   along with this program; if not, write to the
 #   Free Software Foundation, Inc.,
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
-import os
 
-if os.name == 'nt':
-	from backends.twain import *
-else.
-	from backends.sane import *
+class ScannerError:
+	NoDeviceFound = 1
+	CouldNotOpenDevice = 2
+	AcquisitionError = 3
+	UnknownError = 4
 
