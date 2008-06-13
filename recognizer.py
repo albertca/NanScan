@@ -23,6 +23,7 @@ from ocr import *
 
 from template import *
 from document import *
+from trigram import *
 
 import tempfile
 
@@ -130,7 +131,7 @@ class Recognizer(QObject):
 
 	# Tries to find out the best template in 'templates' for the image file given by 'image'
 	# TODO: Should be reestructured to use function scanWithTemplate()
-	def findBestTemplate( self, cr, file, templates ):
+	def findBestTemplate( self, file, templates ):
 		self.scan( file ) 
 		max = 0
 		bestDocument = Document()
@@ -157,9 +158,7 @@ class Recognizer(QObject):
 					print "Jumping %s due to type %s " % ( templateBox.name, templateBox.type )
 					continue
 				matcherBoxes += 1
-				#cr.execute( 'SELECT similarity(%s,%s)', (translate(text), translate(templateBox.text)) )
-				cr.execute( 'SELECT similarity(%s,%s)', (text, templateBox.text) )
-				similarity = cr.fetchone()[0]
+				similarity = Trigram.trigram( text, templateBox.text )
 				score += similarity
 			score = score / matcherBoxes
 			if score > max:
