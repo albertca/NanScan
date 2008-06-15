@@ -4,32 +4,36 @@ class Trigram:
 	# Returns a list of the trigrams of a sentence. That is, the list of
 	# all trigrams of each of the words in a string. Words are currently 
 	# splitted by the space character only.
+	# Note that more than a list it's a sorted set. So there are no repeated items.
 	@staticmethod
 	def trigramList( text ):
 		words = text.split( ' ' )
-		l = []
+		l = set()
 		for x in words:
 			for y in Trigram.wordTrigramList( x ):
-				l.append( y )
+				l.add( y )
+		l = list( l )
+		l.sort()
 		return l
 
 	# Calculates the list of trigrams contained in a word. If you feed
 	# this function with an string with spaces they'll be treated like
 	# normal characters. The usual trigram function is trigramList() which
 	# returns trigrams for all of it's words.
+	# Note that more than a list it's a sorted set. So there are no repeated items.
 	@staticmethod
 	def wordTrigramList( text ):
-		l = []
+		l = set()
 		size = len(text) + 1
 		text = '  ' + text + ' '
 		for x in range(size):
-			l.append( text[x:x+3] )
+			l.add( text[x:x+3] )
+		l = list( l )
+		l.sort()
 		return l
 
 	# Calculates similarity between two strings using a trigram algorithm.
-	# This is based in PostgreSQL pg_trgm implementation though in some cases
-	# you'll get different results. For example trigram( 'abcabc', 'abc' ) 
-	# returns 0.3 here and 0.67 in PostgreSQL's version.
+	# This is based in PostgreSQL pg_trgm implementation.
 	# There's also a commented alternative for the final calculation of the
 	# distance.
 	@staticmethod
@@ -62,6 +66,7 @@ class Trigram:
 	
 if __name__ == '__main__':
 	print Trigram.trigramList( 'abc' )
+	print Trigram.trigramList( 'abcabc' )
 	print Trigram.trigramList( 'hola' )
 	print Trigram.trigramList( 'adeu manalet' )
 
