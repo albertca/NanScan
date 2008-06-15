@@ -33,6 +33,7 @@ class Scanner(QObject):
 	def __init__(self, parent=None):
 		QObject.__init__(self, parent)
 		self.resolution = 300
+		self.duplex = False
 
 	def listDevices(self):
 		scan = BlockingScanner(self)
@@ -43,9 +44,13 @@ class Scanner(QObject):
 	def setResolution(self, value):
 		self.resolution = value
 
+	def setDuplex(self, value):
+		self.duplex = value
+
 	def startScan(self):
 		self.thread = ThreadedScan(self)
 		self.thread.resolution = self.resolution
+		self.thread.duplex = self.duplex
 		self.connect( self.thread, SIGNAL('finished()'), self, SIGNAL('finished()') )
 		self.connect( self.thread, SIGNAL('scanned(QImage)'), self, SIGNAL('scanned(QImage)') )
 		self.connect( self.thread, SIGNAL('error(int)'), self, SIGNAL('error(int)') )
@@ -55,10 +60,12 @@ class ThreadedScan(QThread):
 	def __init__(self, parent=None):
 		QThread.__init__(self, parent)
 		self.resolution = 300
+		self.duplex = False
 
 	def run(self):
 		s = ScannerBackend()
 		s.setResolution( self.resolution )
+		s.setDuplex( self.duplex )
 		self.connect( s, SIGNAL('scanned(QImage)'), self.scanned, Qt.QueuedConnection )
 		self.connect( s, SIGNAL('error(int)'), self, SIGNAL('error(int)'), Qt.QueuedConnection )
 		s.scan()
@@ -68,5 +75,4 @@ class ThreadedScan(QThread):
 		# As we're now out of the thread, we create a new QImage
 		# object, otherwise the application will crash
 		self.emit( SIGNAL('scanned(QImage)'), QImage( image ) )
-
 

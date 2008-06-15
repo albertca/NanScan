@@ -11,6 +11,7 @@ class SynchronousScanner(QObject):
 		self.manager = None
 		self.source = None
 		self.resolution = 300
+		self.duplex = False
 	
 	def stripNull(self, s):
 		offset = string.find(s, '\0')
@@ -21,6 +22,10 @@ class SynchronousScanner(QObject):
 	# Member of SynchronousScanner Interface
 	def setResolution(self, value):
 		self.resolution = value
+
+	# Member of SynchronousScanner Interface
+	def setDuplex(self, value):
+		self.duplex = value
 
 	# Member of SynchronousScanner Interface
 	def listDevices(self):
@@ -70,6 +75,12 @@ class SynchronousScanner(QObject):
 			self.source.SetCapability( twain.ICAP_XRESOLUTION, twain.TWTY_FIX32, float(self.resolution) )
 		except:
 			print "Could not set resolution to '%s'" % self.resolution
+			pass
+
+		try:
+			self.source.SetCapability( twain.ICAP_DUPLEXENABLED, twain.TWON_ONEVALUE, bool(self.duplex) )
+		except:
+			print "Could not set duplex to '%s'" % self.duplex
 			pass
 		try:
 			self.source.RequestAcquire(0, 0)

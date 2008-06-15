@@ -29,6 +29,7 @@ class SynchronousScanner(QObject):
 		QObject.__init__(self, parent)
 		sane.init()
 		self.resolution = 300
+		self.duplex = False
 	
 	# Member of SynchronousScanner Interface
 	def listDevices(self):
@@ -39,6 +40,10 @@ class SynchronousScanner(QObject):
 	# Member of SynchronousScanner Interface
 	def setResolution(self, value):
 		self.resolution = value
+
+	# Member of SynchronousScanner Interface
+	def setDuplex(self, value):
+		self.duplex = value
 
 	# Member of SynchronousScanner Interface
 	def scan(self, name=None):
