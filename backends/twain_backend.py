@@ -93,7 +93,11 @@ class SynchronousScanner(QObject):
 		(handle, more_to_come) = self.source.XferImageNatively()
 		twain.DIBToBMFile(handle, fileName)
 		twain.GlobalHandleFree(handle)
-		return QImage( fileName )
+		image = QImage( fileName )
+		res = float( self.resolution ) * 1000 / 25.4
+		image.setDotsPerMeterX( res )
+		image.setDotsPerMeterY( res )
+		return image
 	
 	# Member of SynchronousScanner Interface
 	def close(self):

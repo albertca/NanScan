@@ -70,6 +70,9 @@ class SynchronousScanner(QObject):
 				print "Obtaining image..."
 				image = ImageQt.ImageQt( iterator.next() )
 				print "Obtain"
+				res = float(self.resolution) * 1000 / 25.4
+				image.setDotsPerMeterX( res )
+				image.setDotsPerMeterY( res )
 				self.emit( SIGNAL('scanned(QImage)'), image )
 			except StopIteration, e:
 				# If StopIteration is raised, then there are no more images in 
