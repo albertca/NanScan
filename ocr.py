@@ -32,6 +32,14 @@ class Character:
 		self.character = None
 		self.box = None
 
+def boxComparison(x, y):
+	if x.box.x() > y.box.x():
+		return 1
+	elif x.box.x() < y.box.x():
+		return -1
+	else:
+		return 0
+
 class Ocr:
 	file = ""
 
@@ -102,13 +110,82 @@ class Ocr:
 		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 		
-		self.convertToBinary(file, '/tmp/tmp.tif')
-		#self.convertIntoValidInput(file, '/tmp/tmp.tif')
+		#self.convertToBinary(file, '/tmp/tmp.tif')
+		self.convertToGray(file, '/tmp/tmp.tif')
 		self.file = "/tmp/tmp.tif"
 
 		txt = lower( self.ocr() )
-		
+
 		self.boxes = self.parseTesseractOutput(txt)
+
+	def firstBox(self, boxes):
+		top = None
+		for x in boxes:
+			if not top or x.box.y() < top.box.y():
+				top = x
+		return top
+
+	def formatedText(self, region=None):
+		if region:
+			# Filter out boxes not in the given region
+			boxes = []
+			for x in self.boxes:
+				if region.intersects(x.box):
+					boxes.append(x)
+		else:
+			# Copy as we'll remove items from the list
+			boxes = self.boxes[:]
+
+		lines = []
+		while boxes:
+			box = self.firstBox( boxes )
+			boxes.remove( box )
+			line = []
+			line.append( box )
+			toRemove = []
+			for x in boxes:
+				if x.box.top() > box.box.bottom():
+					continue
+				elif x.box.bottom() < box.box.top():
+					continue
+				line.append( x )
+				toRemove.append( x )
+
+			for x in toRemove:
+				boxes.remove( x )
+			lines.append( line )
+
+		# Now that we have all boxes in its line. Sort each of
+		# them
+		for line in lines:
+			line.sort( boxComparison )
+
+
+		# Now we have all lines with their characters in their positions
+		# Here we write them in a text and add spaces appropiately. 
+		# In order to not be distracted with character widths of letters
+		# like 'm' or 'i' (which are very wide and narrow), the average
+		# width of the letters on a per line basis. This shows good 
+		# results, by now, on text with the same char size in the line 
+		# which is quite usual.
+		text = ''
+		for line in lines:
+			width = 0
+			count = 0
+			left = None
+			for c in line:
+				if left:
+					# If separtion between previous and current char
+					# is greater than a third of the average character
+					# width we'll add a space.
+					if c.box.left() - left > ( width / count ) / 3:
+						text += u' '
+				text += unicode(c.character)
+				left = c.box.right()
+				width += c.box.width()
+				count += 1
+			text += u'\n'
+		return text
 
 def initOcrSystem():
 	init_gamera()

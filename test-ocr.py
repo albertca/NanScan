@@ -19,8 +19,8 @@
 import ocr
 import sys
 
-initOcrSystem()
+ocr.initOcrSystem()
 
-c = Ocr()
+c = ocr.Ocr()
 c.scan( sys.argv[-1] )
-
+print c.formatedText().encode('ascii','ignore')
