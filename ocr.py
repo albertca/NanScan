@@ -22,6 +22,7 @@ from string import lower
 import codecs
 import tempfile
 import shutil
+import math
 
 from gamera.core import *
 from PyQt4.QtCore import *
@@ -104,11 +105,11 @@ class Ocr:
 		onebit.save_tiff(output)
 		
 	def scan(self, file):
-		image = QImage( file )
-		self.width = image.width()
-		self.height = image.height()
-		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
-		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
+		self.image = QImage( file )
+		self.width = self.image.width()
+		self.height = self.image.height()
+		self.dotsPerMillimeterX = float( self.image.dotsPerMeterX() ) / 1000.0
+		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
 		#self.convertToBinary(file, '/tmp/tmp.tif')
 		self.convertToGray(file, '/tmp/tmp.tif')
@@ -125,7 +126,7 @@ class Ocr:
 				top = x
 		return top
 
-	def formatedText(self, region=None):
+	def textLines(self, region=None):
 		if region:
 			# Filter out boxes not in the given region
 			boxes = []
@@ -159,7 +160,11 @@ class Ocr:
 		# them
 		for line in lines:
 			line.sort( boxComparison )
+		return lines
 
+	def formatedText(self, region=None):
+
+		lines = self.textLines( region )
 
 		# Now we have all lines with their characters in their positions
 		# Here we write them in a text and add spaces appropiately. 
@@ -187,6 +192,65 @@ class Ocr:
 			text += u'\n'
 		return text
 
+	def deskew(self, region=None):
+		# TODO: We should probably discard values that highly differ
+		# from the average for the final value to be used to rotate.
+		lines = self.textLines( region )
+		slopes = []
+		for line in lines:
+			if len(line) < 3:
+				continue
+			x = [b.box.x() for b in line]
+			y = [b.box.y()+ (b.box.height()/2) for b in line]
+			slope, x, y = linearRegression(x, y)
+			slopes.append( slope )
+		average = 0
+		for x in slopes:
+			average += x
+		average = average / len(slopes)
+		print "AVERAGE SLOPE: ", average
+		transform = QTransform()
+		transform.rotateRadians( -math.atan( average ) )
+		image = self.image.transformed( transform, Qt.SmoothTransformation )
+		image.save( '/tmp/rotated.png', 'PNG' )
+
+
+
 def initOcrSystem():
 	init_gamera()
+
+
+# Linear regression of y = ax + b
+# Usage
+# real, real, real = linearRegression(list, list)
+# Returns coefficients to the regression line "y=ax+b" from x[] and y[], and R^2 Value
+def linearRegression(X, Y):
+	if len(X) != len(Y):
+		raise ValueError, 'unequal length'
+	N = len(X)
+	if N <= 2:
+		raise ValueError, 'three or more values needed'
+	Sx = Sy = Sxx = Syy = Sxy = 0.0
+	for x, y in map(None, X, Y):
+		Sx = Sx + x
+		Sy = Sy + y
+		Sxx = Sxx + x*x
+		Syy = Syy + y*y
+		Sxy = Sxy + x*y
+	det = Sxx * N - Sx * Sx
+	a, b = (Sxy * N - Sy * Sx)/det, (Sxx * Sy - Sx * Sxy)/det
+	meanerror = residual = 0.0
+	for x, y in map(None, X, Y):
+		meanerror = meanerror + (y - Sy/N)**2
+		residual = residual + (y - a * x - b)**2
+	RR = 1 - residual/meanerror
+	ss = residual / (N-2)
+	Var_a, Var_b = ss * N / det, ss * Sxx / det
+	#print "y=ax+b"
+	#print "N= %d" % N
+	#print "a= %g \pm t_{%d;\alpha/2} %g" % (a, N-2, math.sqrt(Var_a))
+	#print "b= %g \pm t_{%d;\alpha/2} %g" % (b, N-2, math.sqrt(Var_b))
+	#print "R^2= %g" % RR
+	#print "s^2= %g" % ss
+	return a, b, RR
 
