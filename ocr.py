@@ -91,7 +91,7 @@ class Ocr:
 		return u''.join(output)
 		
 	# Uses convert to convert into gray scale
-	def convertToGray(self, input, output):
+	def convertToGrayScale(self, input, output):
 		os.spawnlp(os.P_WAIT, 'convert', 'convert', '-type', 'grayscale', '-depth', '8', input, output)
 
 	# Uses Gamera OTSU threashold algorithm to convert into binary
@@ -112,7 +112,7 @@ class Ocr:
 		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
 		#self.convertToBinary(file, '/tmp/tmp.tif')
-		self.convertToGray(file, '/tmp/tmp.tif')
+		self.convertToGrayScale(file, '/tmp/tmp.tif')
 		self.file = "/tmp/tmp.tif"
 
 		txt = lower( self.ocr() )
@@ -126,6 +126,17 @@ class Ocr:
 				top = x
 		return top
 
+	## @brief Obtain text lines in a list of lines where each line is a list
+	# of ordered characters.
+	# Note that no spaces are added in this functions and each character is a 
+	# Character class instance.
+	# The algorithm used is pretty simple:
+	#   1- Put all boxes in a list ('boxes')
+	#   2- Search top most box, remove from pending 'boxes' and add in a new line
+	#   3- Search all boxes that vertically intersect with current box, remove from
+	#       pending and add in the current line
+	#   4- Go to number 2 until all boxes have been processed.
+	#   5- Sort the characters of each line by the y coordinate.
 	def textLines(self, region=None):
 		if region:
 			# Filter out boxes not in the given region
