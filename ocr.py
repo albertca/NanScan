@@ -24,6 +24,8 @@ import tempfile
 import shutil
 import math
 
+from temporaryfile import *
+
 from gamera.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -90,8 +92,10 @@ class Ocr:
 		# We always return unicode strings 
 		return u''.join(output)
 		
-	# Uses convert to convert into gray scale
-	def convertToGrayScale(self, input, output):
+	## @brief Uses convert to convert the given image (QImage) into gray scale
+	def convertToGrayScale(self, image, output):
+		input = TemporaryFile.create( '.tif' ) 
+		image.save( input, 'TIFF' )
 		os.spawnlp(os.P_WAIT, 'convert', 'convert', '-type', 'grayscale', '-depth', '8', input, output)
 
 	# Uses Gamera OTSU threashold algorithm to convert into binary
@@ -104,22 +108,23 @@ class Ocr:
 		# Saving for tesseract processing
 		onebit.save_tiff(output)
 		
-	def scan(self, file):
-		self.image = QImage( file )
+	## @brief Scans the given image (QImage) with the OCR.
+	def scan(self, image):
+		self.image = image
 		self.width = self.image.width()
 		self.height = self.image.height()
 		self.dotsPerMillimeterX = float( self.image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
-		#self.convertToBinary(file, '/tmp/tmp.tif')
-		self.convertToGrayScale(file, '/tmp/tmp.tif')
-		self.file = "/tmp/tmp.tif"
+		self.file = TemporaryFile.create('.tif') 
+		self.convertToGrayScale(image, self.file)
 
 		txt = lower( self.ocr() )
 
 		self.boxes = self.parseTesseractOutput(txt)
 
-	def firstBox(self, boxes):
+	## @brief Obtains top most box of the given list
+	def topMostBox(self, boxes):
 		top = None
 		for x in boxes:
 			if not top or x.box.y() < top.box.y():
@@ -150,7 +155,7 @@ class Ocr:
 
 		lines = []
 		while boxes:
-			box = self.firstBox( boxes )
+			box = self.topMostBox( boxes )
 			boxes.remove( box )
 			line = []
 			line.append( box )
@@ -180,11 +185,13 @@ class Ocr:
 		# Now we have all lines with their characters in their positions
 		# Here we write them in a text and add spaces appropiately. 
 		# In order to not be distracted with character widths of letters
-		# like 'm' or 'i' (which are very wide and narrow), the average
+		# like 'm' or 'i' (which are very wide and narrow), we average
 		# width of the letters on a per line basis. This shows good 
 		# results, by now, on text with the same char size in the line 
 		# which is quite usual.
-		text = ''
+
+		# Note we must always use unicode strings
+		text = u''
 		for line in lines:
 			width = 0
 			count = 0
@@ -196,14 +203,27 @@ class Ocr:
 					# width we'll add a space.
 					if c.box.left() - left > ( width / count ) / 3:
 						text += u' '
-				text += unicode(c.character)
+
+				# c.character is already a unicode string
+				text += c.character
 				left = c.box.right()
 				width += c.box.width()
 				count += 1
 			text += u'\n'
 		return text
 
-	def deskew(self, region=None):
+	## @brief Calculates slope of text lines
+	# This value is used by deskew() function to rotate image and
+	# align text horitzontally. Note that the slope can be calculated
+	# by only the text in a region of the image.
+	#
+	# Algorithm:
+	#   1- Calculate textLines()
+	#   2- For each line with more than three characters calculate the linear 
+	#      regression (pick up slope) given by the x coordinate of the box and 
+	#      y as the middle point of the box.
+	#   3- Calculate the average of all slopes.
+	def slope(self, region=None):
 		# TODO: We should probably discard values that highly differ
 		# from the average for the final value to be used to rotate.
 		lines = self.textLines( region )
@@ -215,17 +235,28 @@ class Ocr:
 			y = [b.box.y()+ (b.box.height()/2) for b in line]
 			slope, x, y = linearRegression(x, y)
 			slopes.append( slope )
+		if len(slopes) == 0:
+			return 0
+
 		average = 0
 		for x in slopes:
 			average += x
 		average = average / len(slopes)
-		print "AVERAGE SLOPE: ", average
+		return average
+
+	def deskewOnce(self, region=None):
+		slope = self.slope( region )
 		transform = QTransform()
-		transform.rotateRadians( -math.atan( average ) )
-		image = self.image.transformed( transform, Qt.SmoothTransformation )
-		image.save( '/tmp/rotated.png', 'PNG' )
+		transform.rotateRadians( -math.atan( slope ) )
+		self.image = self.image.transformed( transform, Qt.SmoothTransformation )
 
-
+	def deskew(self, region=None):
+		slope = self.slope( region )
+		if slope > 0.001:
+			self.deskewOnce( self, region )
+			slope = self.slope( region )
+			if slope > 0.001:
+				self.deskewOnce( self, region )
 
 def initOcrSystem():
 	init_gamera()

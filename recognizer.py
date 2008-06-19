@@ -42,13 +42,13 @@ def translate(text):
 	return txt
 
 class Analyze(QThread):
-	def __init__(self, analyzer, file, parent=None):
+	def __init__(self, analyzer, image, parent=None):
 		QThread.__init__(self, parent)
 		self.analyzer = analyzer
-		self.file = file
+		self.image = image
 
 	def run(self):
-		self.analyzer.scan( self.file )
+		self.analyzer.scan( self.image )
 
 
 class Recognizer(QObject):
@@ -77,16 +77,16 @@ class Recognizer(QObject):
 		return ['barcode', 'text']
 		
 	# Synchronous
-	def recognize(self, file):
-		self.fileName = file
-		self.barcode.scan( file )
-		self.ocr.scan( file )
+	def recognize(self, image):
+		self.image = image
+		self.barcode.scan( image )
+		self.ocr.scan( image )
 
-	# Asynchronous: Starts analyzers in background threads. Emits finished() at the end
+	## @brief Asynchronous: Starts analyzers in background threads. Emits finished() at the end
 	def startRecognition(self, file):
-		self.fileName = file
-		self.ocrThread = Analyze( self.ocr, file, self )
-		self.barcodeThread = Analyze( self.barcode, file, self )
+		self.image = image
+		self.ocrThread = Analyze( self.ocr, image, self )
+		self.barcodeThread = Analyze( self.barcode, image, self )
 		self.connect( self.ocrThread, SIGNAL('finished()'), self.recognitionFinished )
 		self.connect( self.barcodeThread, SIGNAL('finished()'), self.recognitionFinished )
 		self.ocrThread.start()
