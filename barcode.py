@@ -22,6 +22,7 @@ from PyQt4.QtGui import *
 from string import lower
 import os
 import tempfile
+from temporaryfile import *
 
 class Box:
 	def __init__(self):
@@ -73,7 +74,8 @@ class Barcode:
 		# Always return unicode strings
 		return u''
 
-	def scan(self, file):
+	## @brief Scans the given image (QImage) looking for barcodes.
+	def scan(self, image):
 		# Clean boxes so scan() can be called more than once
 		self.boxes = []
 
@@ -82,6 +84,8 @@ class Barcode:
 		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
+		file = TemporaryFile.create()
+		image.save( file, 'PNG' )
 		command = '/home/albert/d/git/exact-image-0.5.0/objdir/frontends/bardecode'
 		content = self.spawn( command, file )
 		self.parseBardecodeOutput( content )

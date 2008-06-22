@@ -18,9 +18,20 @@
 
 import ocr
 import sys
+from PyQt4.QtGui import *
 
-initOcrSystem()
+ocr.initOcrSystem()
 
-c = Ocr()
-c.scan( sys.argv[-1] )
+c = ocr.Ocr()
+image = QImage()
+if not image.load( sys.argv[-1] ):
+	print 'Error loading image'
+	os.exit(1)
+
+c.scan( image )
+print c.formatedText().encode('ascii','ignore')
+print c.slope()
+c.deskewOnce()
+c.image.save( '/tmp/rotated.png', 'PNG' )
+print "Image stored in /tmp/rotated.png"
 

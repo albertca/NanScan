@@ -42,13 +42,13 @@ def translate(text):
 	return txt
 
 class Analyze(QThread):
-	def __init__(self, analyzer, file, parent=None):
+	def __init__(self, analyzer, image, parent=None):
 		QThread.__init__(self, parent)
 		self.analyzer = analyzer
-		self.file = file
+		self.image = image
 
 	def run(self):
-		self.analyzer.scan( self.file )
+		self.analyzer.scan( self.image )
 
 
 class Recognizer(QObject):
@@ -76,23 +76,23 @@ class Recognizer(QObject):
 	def analyzersAvailable(self):
 		return ['barcode', 'text']
 		
-	# Synchronous: Returns the types of analyzers available
-	def scan(self, file):
-		self.fileName = file
-		self.barcode.scan( file )
-		self.ocr.scan( file )
+	# Synchronous
+	def recognize(self, image):
+		self.image = image
+		self.barcode.scan( image )
+		self.ocr.scan( image )
 
-	# Asynchronous: Starts analyzers in background threads. Emits finished() at the end
-	def startScan(self, file):
-		self.fileName = file
-		self.ocrThread = Analyze( self.ocr, file, self )
-		self.barcodeThread = Analyze( self.barcode, file, self )
-		self.connect( self.ocrThread, SIGNAL('finished()'), self.scanFinished )
-		self.connect( self.barcodeThread, SIGNAL('finished()'), self.scanFinished )
+	## @brief Asynchronous: Starts analyzers in background threads. Emits finished() at the end
+	def startRecognition(self, file):
+		self.image = image
+		self.ocrThread = Analyze( self.ocr, image, self )
+		self.barcodeThread = Analyze( self.barcode, image, self )
+		self.connect( self.ocrThread, SIGNAL('finished()'), self.recognitionFinished )
+		self.connect( self.barcodeThread, SIGNAL('finished()'), self.recognitionFinished )
 		self.ocrThread.start()
 		self.barcodeThread.start()
 		
-	def scanFinished(self):
+	def recognitionFinished(self):
 		if self.ocrThread.isFinished() and self.barcodeThread.isFinished():
 			self.emit( SIGNAL('finished()') )
 
@@ -111,17 +111,24 @@ class Recognizer(QObject):
 			print "Filter type '%s' not implemented" % filterType
 			return value
 
-	def scanWithTemplate(self, file, template):
+	## @brief Extracts the information of the recognized image using the
+	# given template. 
+	# Optionally an x and y offset can be applied to the template before
+	# extracting data.
+	# Note that the image must have been scanned (using scan() or startScan()) 
+	# before using this function.
+	def extractWithTemplate(self, template, xOffset = 0, yOffset = 0): 
 		if not template:
 			return None
-
-		self.scan( file )
 		document = Document()
 		for templateBox in template.boxes:
 			if not templateBox.text:
 				continue
 
-			text = self.textInRegion( templateBox.rect, templateBox.recognizer )
+			rect = QRectF( templateBox.rect )
+			rect.translate( xOffset, yOffset )
+
+			text = self.textInRegion( rect, templateBox.recognizer )
 			text = self.filter( text, templateBox.filter )
 			documentBox = DocumentBox()
 			documentBox.text = text
@@ -129,42 +136,52 @@ class Recognizer(QObject):
 			document.addBox( documentBox )
 		return document
 
-	# Tries to find out the best template in 'templates' for the image file given by 'image'
-	# TODO: Should be reestructured to use function scanWithTemplate()
-	def findBestTemplate( self, file, templates ):
-		self.scan( file ) 
+	## @brief Tries to find out the best template in 'templates' for the current
+	# image.
+	# Use the optional parameter 'offset' to specify up to how many millimeters
+	# the template should be translated to find the best match. Setting this to
+	# 5 (the default) will make the template move 5 millimeter to the right,
+	# 5 to the left, 5 to the top and 5 to the bottom. This means 121 positions
+	# per template.
+	# Note that the image must have been scanned (using scan() or startScan()) 
+	# before using this function.
+	#
+	# TODO: Using offsets to find the best template is easy but highly inefficient.
+	#  a smarter solution should be implemented.
+	def findMatchingTemplate( self, templates, offset = 5 ):
 		max = 0
-		bestDocument = Document()
-		bestTemplate = None
+		best = {
+			'template': None,
+			'document': Document(),
+			'xOffset' : 0,
+			'yOffset' : 0
+		}
 		for template in templates:
-			currentDocument = Document()
-
 			if not template.boxes:
 				continue
-			score = 0
-			matcherBoxes = 0
-			for templateBox in template.boxes:
-				if not templateBox.text:
-					continue
-				text = self.textInRegion( templateBox.rect, templateBox.recognizer )
-				text = self.filter( text, templateBox.filter )
-
-				documentBox = DocumentBox()
-				documentBox.text = text
-				documentBox.templateBox = templateBox
-				currentDocument.addBox( documentBox )
-
-				if templateBox.type != 'matcher':
-					print "Jumping %s due to type %s " % ( templateBox.name, templateBox.type )
-					continue
-				matcherBoxes += 1
-				similarity = Trigram.trigram( text, templateBox.text )
-				score += similarity
-			score = score / matcherBoxes
-			if score > max:
-				max = score
-				bestTemplate = template
-				bestDocument = currentDocument
-			print "Template %s has score %s" % (template.name, score)
-		return { 'template': bestTemplate, 'document': bestDocument }
+			# Consider up to 5 millimeter offset
+			for xOffset in range(-5,6):
+				for yOffset in range(-5,6):
+					score = 0
+					matcherBoxes = 0
+					currentDocument = self.extractWithTemplate( template, xOffset, yOffset )
+					for documentBox in currentDocument.boxes:
+						templateBox = documentBox.templateBox
+						if documentBox.templateBox.type != 'matcher':
+							print "Jumping %s due to type %s " % ( templateBox.name, templateBox.type )
+							continue
+						matcherBoxes += 1
+						similarity = Trigram.trigram( documentBox.text, templateBox.text )
+						score += similarity
+					score = score / matcherBoxes
+					if score > max:
+						max = score
+						best = { 
+							'template': template,
+							'document': currentDocument,
+							'xOffset' : xOffset,
+							'yOffset' : yOffset
+						}
+					print "Template %s has score %s with offset (%s,%s)" % (template.name, score, xOffset, yOffset)
+		return best
 
