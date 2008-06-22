@@ -78,7 +78,7 @@ class SynchronousScanner(QObject):
 			pass
 
 		try:
-			self.source.SetCapability( twain.ICAP_DUPLEXENABLED, twain.TWON_ONEVALUE, bool(self.duplex) )
+			self.source.SetCapability( twain.CAP_DUPLEXENABLED, twain.TWTY_BOOL, bool(self.duplex) )
 		except:
 			print "Could not set duplex to '%s'" % self.duplex
 			pass
@@ -89,6 +89,8 @@ class SynchronousScanner(QObject):
 		
 		while self.next():
 			image = self.capture()
+			if not image:
+				return common.ScannerError.AcquisitionError
 			self.emit( SIGNAL('scanned(QImage)'), image )
 		self.source = None
 
@@ -101,7 +103,10 @@ class SynchronousScanner(QObject):
 		
 	def capture(self):
 		fileName = "tmp.tmp"
-		(handle, more_to_come) = self.source.XferImageNatively()
+		try:
+			(handle, more_to_come) = self.source.XferImageNatively()
+		except:
+			return None	
 		twain.DIBToBMFile(handle, fileName)
 		twain.GlobalHandleFree(handle)
 		image = QImage( fileName )
