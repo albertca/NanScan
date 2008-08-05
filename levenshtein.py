@@ -49,31 +49,6 @@ class Levenshtein:
 				)
 		return d[len(text1)-1][len(text2)-1]
 
-#Pseudocode:
-#int LevenshteinDistance(char s[1..m], char t[1..n])
-	#// d is a table with m+1 rows and n+1 columns
-	#declare int d[0..m, 0..n]
-#
-	#for i from 0 to m
-		#d[i, 0] := i
-	#for j from 0 to n
-		#d[0, j] := j
-#
-	#for i from 1 to m
-		#for j from 1 to n
-		#{
-			#if s[i] = t[j] then 
-				#cost := 0
-			#else 
-				#cost := 1
-			#d[i, j] := minimum(
-				#d[i-1, j] + 1,     // deletion
-				#d[i, j-1] + 1,     // insertion
-				#d[i-1, j-1] + cost   // substitution
-			#)
-		#}
-	#return d[m, n]
-
 if __name__ == '__main__':
 	print Levenshtein.levenshtein( 'abc', 'abc' )
 	print Levenshtein.levenshtein( 'abcabc', 'abc' )
