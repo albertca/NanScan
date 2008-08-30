@@ -24,7 +24,7 @@ class Levenshtein:
 		# Should use an array instead..
 		for i in range(len(text1)):
 			d.append( [] )
-			for j in range(len(text1)):
+			for j in range(len(text2)):
 				d[i].append(0)
 
 		for i in range(len(text1)):
@@ -55,3 +55,5 @@ if __name__ == '__main__':
 	print Levenshtein.levenshtein( 'abcdef', 'abc' )
 	print Levenshtein.levenshtein( 'abcdef', 'bcd' )
 	print Levenshtein.levenshtein( 'bcdef', 'abc' )
+	for x in range(10000):
+		Levenshtein.levenshtein( 'text de la plantilla', 'text llarg que pot ser del document que tractem actualment' )

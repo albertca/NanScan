@@ -42,3 +42,5 @@ if __name__ == '__main__':
 	print Hamming.hamming( 'abcdef', 'abc' )
 	print Hamming.hamming( 'abcdef', 'bcd' )
 	print Hamming.hamming( 'bcdef', 'abc' )
+	for x in range(10000):
+		Hamming.hamming( 'text de la plantilla', 'text llarg que pot ser del document que tractem actualment' )
