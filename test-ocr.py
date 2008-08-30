@@ -18,6 +18,7 @@
 
 import ocr
 import sys
+import codecs
 from PyQt4.QtGui import *
 
 ocr.initOcrSystem()
@@ -30,8 +31,11 @@ if not image.load( sys.argv[-1] ):
 
 c.scan( image )
 print c.formatedText().encode('ascii','ignore')
+f=codecs.open( '/tmp/output.txt', 'w', 'utf-8' )
+f.write( c.formatedText() )
+f.close()
 print c.slope()
 c.deskewOnce()
 c.image.save( '/tmp/rotated.png', 'PNG' )
-print "Image stored in /tmp/rotated.png"
+#print "Image stored in /tmp/rotated.png"
 
