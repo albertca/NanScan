@@ -62,4 +62,3 @@ class TemplateBox:
 	def getFilter(self):
 		return self._filter
 	filter=property(getFilter,setFilter)
-	
