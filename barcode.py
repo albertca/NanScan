@@ -80,7 +80,7 @@ class Barcode:
 		self.boxes = []
 
 		# Obtain image resolution
-		image = QImage( file )
+		image = QImage( image )
 		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
