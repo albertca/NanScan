@@ -1,0 +1,36 @@
+Some ideas where nanscan could help/implement:
+
+- The queue order of scanned documents should be kept somehow. For example,
+in Open ERP even if one document has gone as an attachment to one customer
+it could be interesting to know which document (page) was scanned just before
+and which just after. This could be used by algorithms trying to identify
+related pages. For multi page document handling we could use djvu as it seems
+the right document format. It allows attaching meta information, ocr
+information with characters positions is supported (perl script available to 
+feed from tesseract output), it can also handle annotations.
+Image compression is supposed to be very good. A first test with c44 (the 
+compression application) shows results similar to JPEG.
+
+It should be easy to attach concepts such as page, volume or collection to an image.
+Templates should ease that too. So by simply setting an input as 'page' or 'volume' 
+there should be some logic to handle and understand them and put them in the same 
+djvu (or PDF, TIFF, whatever) document.
+
+djvu has some interesting features regarding speed. You can even have each page (or I 
+suppose a set of pages) in different files which can be queried on demand. The index
+file just links to the appropiate URL for each of the pages.
+
+- Logo/image detection/recognition
+
+- Document segmentation
+
+- Multiline values
+
+- API consistency: Should we use python properties (python standard) or setProperty()
+property() functions (PyQt4 standard). The latter has a couple of problems: the need 
+to create both functions for each property and that if we want to embed a widget in
+QtDesigner properties should be set in Python style.
+
+- Add simple scanning dialog, with the possibility of storing the image in a file, 
+server, etc.
+
