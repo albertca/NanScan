@@ -84,13 +84,7 @@ class Ocr:
 		return output
 
 	def textInRegion(self, region):
-		output = []
-		for x in self.boxes:
-			r = region.intersected(x.box)
-			if r.isValid():
-				output.append(x.character)
-		# We always return unicode strings 
-		return u''.join(output)
+		return self.formatedText( region )
 		
 	## @brief Uses convert to convert the given image (QImage) into gray scale
 	def convertToGrayScale(self, image, output):
@@ -187,7 +181,7 @@ class Ocr:
 		# In order to not be distracted with character widths of letters
 		# like 'm' or 'i' (which are very wide and narrow), we average
 		# width of the letters on a per line basis. This shows good 
-		# results, by now, on text with the same char size in the line 
+		# results, by now, on text with the same char size in the line,
 		# which is quite usual.
 
 		# Note we must always use unicode strings
@@ -196,26 +190,62 @@ class Ocr:
 			width = 0
 			count = 0
 			left = None
+			spacesToAdd = []
+			words = []
 			for c in line:
 				if left:
 					# If separtion between previous and current char
 					# is greater than a third of the average character
 					# width we'll add a space.
 					if c.box.left() - left > ( width / count ) / 3:
-						text += u' '
+						if spacesToAdd:
+							words.append( line[spacesToAdd[-1]:count] )
+						spacesToAdd.append( count )
 
 				# c.character is already a unicode string
-				text += c.character
 				left = c.box.right()
 				width += c.box.width()
 				count += 1
+
+			# Try to find out if they are fixed sized characters
+			# We've got some problems with fixed sized fonts. In some cases the 'I' letter will
+			# have the width of a pipe but the distance between characters will be fixed. In these
+			# cases it's very probable our algorithm will add incorrect spaces before and/or after
+			# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
+			# font. The commented code below tries to do just that by calculating distances within
+			# the letters of each word. We need to find out if something like this can work and 
+			# use it.
+			#for x in words:
+				#dist = []
+				#for c in range( len(x)-1 ):
+					#dist.append( x[c+1].box.center().x() - x[c].box.center().x() )
+				#print 'Paraula: ', (u''.join( [i.character for i in x] )).encode( 'ascii', 'ignore')
+				#print 'Distancies: ', dist
+					
+				
+			# Reverse so indexes are still valid after insertions
+			spacesToAdd.reverse()
+			previousIdx = None
+			for idx in spacesToAdd:
+				c = Character()
+				c.character = u' '
+				c.box = QRectF()
+				c.box.setTop( line[idx - 1].box.top() )
+				c.box.setBottom( line[idx - 1].box.bottom() )
+				c.box.setLeft( line[idx - 1].box.right() )
+				c.box.setRight( line[idx].box.left() )
+				line.insert( idx, c )
+
+			for c in line:
+				text += c.character
 			text += u'\n'
+
 		return text
 
 	## @brief Calculates slope of text lines
 	# This value is used by deskew() function to rotate image and
 	# align text horitzontally. Note that the slope can be calculated
-	# by only the text in a region of the image.
+	# by the text of only a region of the image.
 	#
 	# Algorithm:
 	#   1- Calculate textLines()
