@@ -43,9 +43,12 @@ def boxComparison(x, y):
 	else:
 		return 0
 
+## @breif This class allows using an OCR and provides several convenient functions 
+# regarding text and image processing such as deskewing or obtaining formated text.
 class Ocr:
 	file = ""
 
+	## @brief Uses tesseract to recognize text of the current image.
 	def ocr(self):
 		directory = tempfile.mkdtemp()
 		path = os.path.join( directory, 'tesseract' )
@@ -56,6 +59,7 @@ class Ocr:
 		shutil.rmtree(directory, True)
 		return content
 
+	## @brief Parses tesseract output creating a list of Character objects.
 	def parseTesseractOutput(self, input):
 		output = []
 		# Output example line: "w 116 1724 133 1736"
@@ -83,16 +87,19 @@ class Ocr:
 			output.append( c )
 		return output
 
+	## @brief Returns the text of a given region of the image. 
+	# It's the same as calling formatedText().
 	def textInRegion(self, region):
 		return self.formatedText( region )
 		
-	## @brief Uses convert to convert the given image (QImage) into gray scale
+	## @brief Uses ImageMagick's 'convert' application to convert the given image 
+	# (QImage) into gray scale
 	def convertToGrayScale(self, image, output):
 		input = TemporaryFile.create( '.tif' ) 
 		image.save( input, 'TIFF' )
 		os.spawnlp(os.P_WAIT, 'convert', 'convert', '-type', 'grayscale', '-depth', '8', input, output)
 
-	# Uses Gamera OTSU threashold algorithm to convert into binary
+	## @brief Uses Gamera OTSU threashold algorithm to convert into binary
 	def convertToBinary(self, input, output):
 		image = load_image(input)
 		# Converting
@@ -127,7 +134,7 @@ class Ocr:
 
 	## @brief Obtain text lines in a list of lines where each line is a list
 	# of ordered characters.
-	# Note that no spaces are added in this functions and each character is a 
+	# Note that no spaces are added in this function and each character is a 
 	# Character class instance.
 	# The algorithm used is pretty simple:
 	#   1- Put all boxes in a list ('boxes')
@@ -172,13 +179,15 @@ class Ocr:
 			line.sort( boxComparison )
 		return lines
 
-	def formatedText(self, region=None):
+	## @brief This function is similar to textLines() but adds spaces between words.
+	# The result is also a list of lines each line being a list of Character objects.
+	def textLinesWithSpaces(self, region=None):
 
 		lines = self.textLines( region )
 
-		# Now we have all lines with their characters in their positions
-		# Here we write them in a text and add spaces appropiately. 
-		# In order to not be distracted with character widths of letters
+		# Now we have all lines with their characters in their positions.
+		# Here we write and add spaces appropiately. 
+		# In order not to be distracted with character widths of letters
 		# like 'm' or 'i' (which are very wide and narrow), we average
 		# width of the letters on a per line basis. This shows good 
 		# results, by now, on text with the same char size in the line,
@@ -208,7 +217,7 @@ class Ocr:
 				count += 1
 
 			# Try to find out if they are fixed sized characters
-			# We've got some problems with fixed sized fonts. In some cases the 'I' letter will
+			# We've got some problems with fixed size fonts. In some cases the 'I' letter will
 			# have the width of a pipe but the distance between characters will be fixed. In these
 			# cases it's very probable our algorithm will add incorrect spaces before and/or after
 			# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
@@ -235,7 +244,14 @@ class Ocr:
 				c.box.setLeft( line[idx - 1].box.right() )
 				c.box.setRight( line[idx].box.left() )
 				line.insert( idx, c )
+		return lines
 
+		
+	## @brief Returns the text in the given region as a string. Spaces included.
+	def formatedText(self, region=None):
+		lines = self.textLinesWithSpaces( region )
+		text = u''
+		for line in lines
 			for c in line:
 				text += c.character
 			text += u'\n'
@@ -288,10 +304,13 @@ class Ocr:
 			if slope > 0.001:
 				self.deskewOnce( self, region )
 
+## @brief Initializes OCR functions that need to be executed once before the library
+# can work. Currently only initiates Gamera which is not being used by now.
 def initOcrSystem():
 	init_gamera()
 
 
+## @brief This function calculates the linearRegression from a list of points.
 # Linear regression of y = ax + b
 # Usage
 # real, real, real = linearRegression(list, list)
