@@ -27,20 +27,6 @@ from trigram import *
 
 import tempfile
 
-# Smarter processing models and functions
-def translate(text):
-	txt = text
-	f=codecs.open('addons/smart_attach/translations.txt', 'r', 'utf-8')
-	if not f:
-		print "File not found"
-		return txt
-	translations = f.readlines()
-	f.close()
-	for x in translations:
-		for y in x[1:]:
-			txt = txt.replace( y, x[0] )
-	return txt
-
 class Analyze(QThread):
 	def __init__(self, analyzer, image, parent=None):
 		QThread.__init__(self, parent)
@@ -185,3 +171,20 @@ class Recognizer(QObject):
 					print "Template %s has score %s with offset (%s,%s)" % (template.name, score, xOffset, yOffset)
 		return best
 
+	#def findTemplateOffset( self, template ):
+		#if not template.boxes:
+			#return QPoint( 0, 0 )
+#
+		#lines = self.ocr.textLines()
+#
+		#for templateBox in template.boxes:
+			#if templateBox.type != 'matcher':
+				#continue
+#
+			#for line in lines:
+				#templateBox.text
+#
+				
+		#	Trigram.trigram( lines[0], 
+
+		
