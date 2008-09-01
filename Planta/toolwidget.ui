@@ -1,0 +1,298 @@
+<ui version="4.0" >
+ <class>Form</class>
+ <widget class="QWidget" name="Form" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>288</width>
+    <height>496</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" >
+   <item>
+    <layout class="QGridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="label" >
+       <property name="text" >
+        <string>X:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" >
+      <widget class="QDoubleSpinBox" name="uiX" >
+       <property name="enabled" >
+        <bool>false</bool>
+       </property>
+       <property name="specialValueText" >
+        <string>-</string>
+       </property>
+       <property name="minimum" >
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum" >
+        <double>9999.000000000000000</double>
+       </property>
+       <property name="value" >
+        <double>-1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" >
+      <widget class="QLabel" name="label_2" >
+       <property name="text" >
+        <string>Y:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QDoubleSpinBox" name="uiY" >
+       <property name="enabled" >
+        <bool>false</bool>
+       </property>
+       <property name="specialValueText" >
+        <string>-</string>
+       </property>
+       <property name="minimum" >
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum" >
+        <double>99999.000000000000000</double>
+       </property>
+       <property name="value" >
+        <double>-1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" >
+      <widget class="QLabel" name="label_3" >
+       <property name="text" >
+        <string>Width:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" >
+      <widget class="QDoubleSpinBox" name="uiWidth" >
+       <property name="enabled" >
+        <bool>false</bool>
+       </property>
+       <property name="specialValueText" >
+        <string>-</string>
+       </property>
+       <property name="minimum" >
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum" >
+        <double>99999.000000000000000</double>
+       </property>
+       <property name="value" >
+        <double>-1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0" >
+      <widget class="QLabel" name="label_4" >
+       <property name="text" >
+        <string>Height:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1" >
+      <widget class="QDoubleSpinBox" name="uiHeight" >
+       <property name="enabled" >
+        <bool>false</bool>
+       </property>
+       <property name="specialValueText" >
+        <string>-</string>
+       </property>
+       <property name="minimum" >
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum" >
+        <double>99999.000000000000000</double>
+       </property>
+       <property name="value" >
+        <double>-1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" >
+     <item>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QLabel" name="label_7" >
+         <property name="text" >
+          <string>Name</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="uiName" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="_2" >
+     <item>
+      <layout class="QHBoxLayout" name="_3" >
+       <item>
+        <widget class="QLabel" name="label_9" >
+         <property name="text" >
+          <string>Recognizer:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QComboBox" name="uiRecognizer" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" >
+     <item>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QLabel" name="label_5" >
+         <property name="text" >
+          <string>Type:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QComboBox" name="uiType" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" >
+     <item>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QLabel" name="label_6" >
+         <property name="text" >
+          <string>Filter:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QComboBox" name="uiFilter" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" >
+     <item>
+      <layout class="QHBoxLayout" >
+       <item>
+        <widget class="QLabel" name="label_8" >
+         <property name="text" >
+          <string>Text:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="uiText" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer>
+     <property name="orientation" >
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0" >
+      <size>
+       <width>20</width>
+       <height>91</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+  <zorder>layoutWidget</zorder>
+  <zorder></zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
