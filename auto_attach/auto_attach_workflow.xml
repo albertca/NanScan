@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+<terp>
+	<data>
+		<record model="workflow" id="wkf">
+			<field name="name">nan.document.basic</field>
+			<field name="osv">nan.document</field>
+			<field name="on_create">True</field>
+		</record>
+
+		<!-- states -->
+		<record model="workflow.activity" id="pending">
+			<field name="wkf_id" ref="wkf"/>
+			<field name="flow_start">True</field>
+			<field name="name">pending</field>
+		</record>
+		<record model="workflow.activity" id="scanned">
+			<field name="wkf_id" ref="wkf"/>
+			<field name="name">scanned</field>
+			<field name="action">scan_document()&#10;write({'state':'scanned'})</field>
+			<field name="kind">function</field>
+		</record>
+		<record model="workflow.activity" id="verified">
+			<field name="wkf_id" ref="wkf"/>
+			<field name="name">verified</field>
+			<field name="action">write({'state':'verified'})</field>
+			<field name="kind">function</field>
+		</record>
+		<record model="workflow.activity" id="processed">
+			<field name="wkf_id" ref="wkf"/>
+			<field name="flow_stop">True</field>
+			<field name="name">processed</field>
+			<field name="action">write({'state':'processed'})</field>
+			<field name="kind">function</field>
+		</record>
+
+		<!-- transitions -->
+		<record model="workflow.transition" id="t1">
+			<field name="act_from" ref="pending"/>
+			<field name="act_to" ref="scanned"/>
+			<field name="signal">scan_document</field>
+		</record>
+
+		<record model="workflow.transition" id="t2">
+			<field name="act_from" ref="scanned"/>
+			<field name="act_to" ref="verified"/>
+			<field name="signal">verify_document</field>
+		</record>
+
+		<record model="workflow.transition" id="t3">
+			<field name="act_from" ref="verified"/>
+			<field name="act_to" ref="processed"/>
+			<field name="signal">process_document</field>
+		</record>
+	</data>
+</terp>

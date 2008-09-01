@@ -10,15 +10,15 @@
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>MainWindow</string>
+   <string>Planta</string>
   </property>
   <widget class="QWidget" name="centralwidget" >
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>63</y>
+     <y>48</y>
      <width>524</width>
-     <height>401</height>
+     <height>417</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" >
@@ -39,9 +39,9 @@
          <property name="geometry" >
           <rect>
            <x>0</x>
-           <y>21</y>
-           <width>71</width>
-           <height>360</height>
+           <y>20</y>
+           <width>70</width>
+           <height>377</height>
           </rect>
          </property>
         </widget>
@@ -60,7 +60,7 @@
      <x>0</x>
      <y>0</y>
      <width>524</width>
-     <height>30</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile" >
@@ -99,9 +99,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>464</y>
+     <y>465</y>
      <width>524</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -109,9 +109,9 @@
    <property name="geometry" >
     <rect>
      <x>0</x>
-     <y>30</y>
+     <y>22</y>
      <width>524</width>
-     <height>33</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="windowTitle" >
@@ -125,6 +125,7 @@
    </attribute>
    <addaction name="actionToggleImageBoxes" />
    <addaction name="actionToggleTemplateBoxes" />
+   <addaction name="actionToggleFeatureBoxes" />
    <addaction name="actionToggleBinarized" />
    <addaction name="separator" />
    <addaction name="actionUnzoom" />
@@ -214,6 +215,17 @@
   <action name="actionUnzoom" >
    <property name="text" >
     <string>Unzoom</string>
+   </property>
+  </action>
+  <action name="actionToggleFeatureBoxes" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="checked" >
+    <bool>true</bool>
+   </property>
+   <property name="text" >
+    <string>Show Feature Boxes</string>
    </property>
   </action>
  </widget>

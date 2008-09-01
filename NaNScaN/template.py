@@ -41,6 +41,9 @@ class TemplateBox:
 
 	def __init__(self):
 		self.rect = QRectF()
+		# Holds the rect where the actual text/barcode/whatever
+		# is found in the template
+		self.featureRect = QRectF()
 		self.recognizer = 'text'
 		self.type = 'matcher'
 		self.filter = 'none'

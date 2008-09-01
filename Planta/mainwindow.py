@@ -113,9 +113,11 @@ class ToolWidget(QWidget):
 
 
 class TemplateBoxItem(QGraphicsRectItem):
-	def __init__(self, rect):
+	def __init__(self, rect, featureRect = None):
 		QGraphicsRectItem.__init__(self, rect)
 		self.templateBox = None
+		if featureRect:
+			self.feature = QGraphicsRectItem(featureRect, self)
 
 class DocumentScene(QGraphicsScene):
 
@@ -129,6 +131,7 @@ class DocumentScene(QGraphicsScene):
 		QGraphicsScene.__init__(self,parent)
 		self._imageBoxesVisible = True
 		self._templateBoxesVisible = True
+		self._featureBoxesVisible = True
 		self._binarizedVisible = False
 		self._mode = self.CreationMode
 		self._selection = None
@@ -276,6 +279,12 @@ class DocumentScene(QGraphicsScene):
 			if item and unicode(item.data( 0 ).toString()) == 'TemplateBox':
 				item.setVisible( value )
 
+	def setFeatureBoxesVisible(self, value):
+		self._featureBoxesVisible = value
+		for item in self.items():
+			if item and unicode(item.data( 0 ).toString()) == 'TemplateBox':
+				item.feature.setVisible( value )
+
 	def setBinarizedVisible(self, value):
 		self._binarizedVisible = value
 		self._oneBitImage.setVisible( value )
@@ -311,7 +320,7 @@ class DocumentScene(QGraphicsScene):
 		return item
 
 	def addTemplateBox(self, box):
-		item = TemplateBoxItem( self.mapRectFromRecognizer( box.rect ) )
+		item = TemplateBoxItem( self.mapRectFromRecognizer( box.rect ), self.mapRectFromRecognizer( box.featureRect ) )
 		item.setPen( self._selectionPen )
 		item.setBrush( self._selectionBrush )
 		item.setZValue( 5 )
@@ -409,6 +418,7 @@ class MainWindow(QMainWindow):
 		self.connect( self.actionOpenTemplate, SIGNAL('triggered()'), self.openTemplate )
 		self.connect( self.actionToggleImageBoxes, SIGNAL('triggered()'), self.toggleImageBoxes )
 		self.connect( self.actionToggleTemplateBoxes, SIGNAL('triggered()'), self.toggleTemplateBoxes )
+		self.connect( self.actionToggleFeatureBoxes, SIGNAL('triggered()'), self.toggleFeatureBoxes )
 		self.connect( self.actionToggleBinarized, SIGNAL('triggered()'), self.toggleBinarized )
 		self.connect( self.actionLogin, SIGNAL('triggered()'), self.login )
 		self.connect( self.actionSaveTemplate, SIGNAL('triggered()'), self.saveTemplate )
@@ -442,6 +452,7 @@ class MainWindow(QMainWindow):
 		box = TemplateBox()
 		box.rect = rect
 		box.text = self.scene.recognizer.textInRegion( rect, 'text' )
+		box.featureRect = self.scene.recognizer.featureRectInRegion( rect, 'text' )
 		add = AddTemplateBoxUndoCommand( self._template, box )
 		self.undoGroup.activeStack().push( add )
 		
@@ -474,6 +485,9 @@ class MainWindow(QMainWindow):
 
 	def toggleTemplateBoxes(self):
 		self.scene.setTemplateBoxesVisible( self.actionToggleTemplateBoxes.isChecked() )
+
+	def toggleFeatureBoxes(self):
+		self.scene.setFeatureBoxesVisible( self.actionToggleFeatureBoxes.isChecked() )
 
 	def toggleBinarized(self):
 		self.scene.setBinarizedVisible( self.actionToggleBinarized.isChecked() )
@@ -530,9 +544,22 @@ class MainWindow(QMainWindow):
 		else:
 			self._template.id = rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': self._template.name } )
 		for x in self._template.boxes:
-			values = { 'x': x.rect.x(), 'y': x.rect.y(), 
-				'width': x.rect.width(), 'height': x.rect.height(), 'template_id': self._template.id, 
-				'name': x.name, 'text': x.text, 'recognizer': x.recognizer, 'type': x.type, 'filter': x.filter }
+			values = { 
+				'x': x.rect.x(), 
+				'y': x.rect.y(), 
+				'width': x.rect.width(), 
+				'height': x.rect.height(), 
+				'feature_x' : x.featureRect.x(),
+				'feature_y' : x.featureRect.y(),
+				'feature_width' : x.featureRect.width(),
+				'feature_height' : x.featureRect.height(),
+				'template_id': self._template.id, 
+				'name': x.name, 
+				'text': x.text, 
+				'recognizer': x.recognizer, 
+				'type': x.type, 
+				'filter': x.filter 
+			}
 			rpc.session.call( '/object', 'execute', 'nan.template.box', 'create', values )
 		self.updateTitle()
 		return True
@@ -561,6 +588,8 @@ class MainWindow(QMainWindow):
 		for x in model.value('boxes'):
 			box = TemplateBox()
 			box.rect = QRectF( x.value('x'), x.value('y'), x.value('width'), x.value('height') )
+			box.featureRect = QRectF( x.value('feature_x'), x.value('feature_y'), 
+						  x.value('feature_width'), x.value('feature_height') )
 			box.name = x.value('name')
 			box.text = x.value('text')
 			box.recognizer = x.value('recognizer')
@@ -572,7 +601,7 @@ class MainWindow(QMainWindow):
 		self.updateTitle()
 
 	def updateTitle(self):
-		self.setWindowTitle( "NaNnar - [%s]" % self._template.name )
+		self.setWindowTitle( "Planta - [%s]" % self._template.name )
 
 	def updateActions(self):
 		# Allow deleting if there's a TemplateBox selected

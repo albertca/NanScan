@@ -91,7 +91,17 @@ class Ocr:
 	# It's the same as calling formatedText().
 	def textInRegion(self, region):
 		return self.formatedText( region )
-		
+
+	## @brief Returns the bounding rectangle of the text returned by textInRegion for
+	# the given region.
+	def featureRectInRegion(self, region):
+		lines = self.textLinesWithSpaces( region )
+		rect = QRectF()
+		for line in lines:
+			for c in line:
+				rect = rect.united( c.box )
+		return rect	
+
 	## @brief Uses ImageMagick's 'convert' application to convert the given image 
 	# (QImage) into gray scale
 	def convertToGrayScale(self, image, output):
@@ -251,7 +261,7 @@ class Ocr:
 	def formatedText(self, region=None):
 		lines = self.textLinesWithSpaces( region )
 		text = u''
-		for line in lines
+		for line in lines:
 			for c in line:
 				text += c.character
 			text += u'\n'

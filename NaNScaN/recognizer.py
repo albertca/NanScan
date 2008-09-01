@@ -43,11 +43,22 @@ class Recognizer(QObject):
 		self.barcode = Barcode()
 		self.ocr = Ocr()
 
+	## @brief Returns the text of a given region of the image. 
 	def textInRegion(self, region, type=None):
 		if type == 'barcode':
 			return self.barcode.textInRegion( region )
 		elif type == 'text':
 			return self.ocr.textInRegion( region )
+		else:
+			return None
+
+	## @brief Returns the bounding rectangle of the text returned by textInRegion for
+	# the given region.
+	def featureRectInRegion(self, region, type=None):
+		if type == 'barcode':
+			return self.barcode.featureRectInRegion( region )
+		elif type == 'text':
+			return self.ocr.featureRectInRegion( region )
 		else:
 			return None
 
@@ -171,20 +182,20 @@ class Recognizer(QObject):
 					print "Template %s has score %s with offset (%s,%s)" % (template.name, score, xOffset, yOffset)
 		return best
 
-	#def findTemplateOffset( self, template ):
-		#if not template.boxes:
-			#return QPoint( 0, 0 )
-#
-		#lines = self.ocr.textLines()
-#
-		#for templateBox in template.boxes:
-			#if templateBox.type != 'matcher':
-				#continue
-#
-			#for line in lines:
-				#templateBox.text
-#
-				
-		#	Trigram.trigram( lines[0], 
+	## @brief Returns a QPoint with the offset that needs to be applied to the given
+	# template to best fit the current image.
+	def findTemplateOffset( self, template ):
+		if not template.boxes:
+			return QPoint( 0, 0 )
 
-		
+		lines = self.ocr.textLinesWithSpaces()
+
+		for templateBox in template.boxes:
+			if templateBox.type != 'matcher':
+				continue
+
+			for line in lines:
+				templateBox.text
+
+				
+
