@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>524</width>
+    <width>709</width>
     <height>487</height>
    </rect>
   </property>
@@ -17,7 +17,7 @@
     <rect>
      <x>0</x>
      <y>48</y>
-     <width>524</width>
+     <width>709</width>
      <height>417</height>
     </rect>
    </property>
@@ -59,7 +59,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>524</width>
+     <width>709</width>
      <height>22</height>
     </rect>
    </property>
@@ -91,8 +91,15 @@
     </property>
     <addaction name="actionDelete" />
    </widget>
+   <widget class="QMenu" name="menu_Actions" >
+    <property name="title" >
+     <string>&amp;Actions</string>
+    </property>
+    <addaction name="actionFindMatchingTemplate" />
+   </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
+   <addaction name="menu_Actions" />
    <addaction name="menuView" />
   </widget>
   <widget class="QStatusBar" name="statusbar" >
@@ -100,7 +107,7 @@
     <rect>
      <x>0</x>
      <y>465</y>
-     <width>524</width>
+     <width>709</width>
      <height>22</height>
     </rect>
    </property>
@@ -110,7 +117,7 @@
     <rect>
      <x>0</x>
      <y>22</y>
-     <width>524</width>
+     <width>709</width>
      <height>26</height>
     </rect>
    </property>
@@ -155,6 +162,9 @@
   <action name="actionLogin" >
    <property name="text" >
     <string>&amp;Login</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionSaveTemplate" >
@@ -226,6 +236,11 @@
    </property>
    <property name="text" >
     <string>Show Feature Boxes</string>
+   </property>
+  </action>
+  <action name="actionFindMatchingTemplate" >
+   <property name="text" >
+    <string>Find Matching Template</string>
    </property>
   </action>
  </widget>

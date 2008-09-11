@@ -427,6 +427,7 @@ class MainWindow(QMainWindow):
 		self.connect( self.actionDelete, SIGNAL('triggered()'), self.removeTemplateBox )
 		self.connect( self.actionZoom, SIGNAL('triggered()'), self.zoom )
 		self.connect( self.actionUnzoom, SIGNAL('triggered()'), self.unzoom )
+		self.connect( self.actionFindMatchingTemplate, SIGNAL('triggered()'), self.findMatchingTemplate )
 		self.toggleImageBoxes()
 		QTimer.singleShot( 1000, self.setup )
 		self.updateTitle()
@@ -441,6 +442,10 @@ class MainWindow(QMainWindow):
 		self.uiToolDock.setWidget( self.uiTool )
 
 		#rpc.session.login( 'http://admin:admin@127.0.0.1:8069', 'g1' )
+
+	def findMatchingTemplate(self):
+		print "Finding matching template"
+		self.recognizer.findMatchingTemplate( [] )
 
 	def recognizerChanged(self, recognizer):
 		rect = self.uiTool.box.rect 
@@ -505,12 +510,18 @@ class MainWindow(QMainWindow):
 		self.uiView.scale( 0.8, 0.8 )
 
 	def login(self):
+		LoginDialog.defaultHost = 'localhost'
+		LoginDialog.defaultPort = 8070
+		LoginDialog.defaultProtocol = 'socket://'
+		LoginDialog.defaultUserName = 'admin'
 		dialog = LoginDialog( self )
 		if dialog.exec_() == QDialog.Rejected:
 			return False
 		if rpc.session.login( dialog.url, dialog.databaseName ) > 0:
+			self.updateTitle()
 			return True
 		else:
+			self.updateTitle()
 			return False
 
 	def newTemplate(self):
@@ -602,6 +613,16 @@ class MainWindow(QMainWindow):
 
 	def updateTitle(self):
 		self.setWindowTitle( "Planta - [%s]" % self._template.name )
+		
+		if rpc.session.logged():
+			server = '%s [%s]' % (rpc.session.url, rpc.session.databaseName)
+		else:
+			shortcut = unicode( self.actionLogin.shortcut().toString() )
+			if shortcut:
+				server = _('Press %s to login') % shortcut
+			else:
+				server = 'not logged in'
+		self.statusBar().showMessage( server )
 
 	def updateActions(self):
 		# Allow deleting if there's a TemplateBox selected
