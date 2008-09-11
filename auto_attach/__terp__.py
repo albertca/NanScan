@@ -28,7 +28,7 @@
 {
 	"name" : "Auto Attach",
 	"version" : "0.1",
-	"description" : "This module adds the hability to extract text from the attached files.",
+	"description" : "This module make it possible to automatically attach scanned documents to any object using NaNScaN.",
 	"author" : "NaN",
 	"website" : "http://www.nan-tic.com",
 	"depends" : ["base"],
