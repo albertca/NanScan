@@ -33,6 +33,7 @@ from NaNScaN.ocr import *
 from NaNScaN.recognizer import *
 
 
+from TemplateStorageManager import *
 from opentemplatedialog import *
 from commands import *
 
@@ -433,8 +434,11 @@ class MainWindow(QMainWindow):
 		self.updateTitle()
 		self.updateActions()
 
+		self.recognizer = Recognizer()
+		self.connect( self.recognizer, SIGNAL('finished()'), self.recognized )
+
 	def setup(self):
-		initOcrSystem()	
+		#initOcrSystem()	
 		#self.scene.setDocument( 'c-0.tif' )
 
 		self.connect( self.uiTool, SIGNAL('recognizerChanged(QString)'), self.recognizerChanged )
@@ -444,8 +448,14 @@ class MainWindow(QMainWindow):
 		#rpc.session.login( 'http://admin:admin@127.0.0.1:8069', 'g1' )
 
 	def findMatchingTemplate(self):
-		print "Finding matching template"
-		self.recognizer.findMatchingTemplate( [] )
+		if not rpc.session.logged():
+			if not self.login():
+				return 
+		templates = TemplateStorageManager.loadAll()
+		result = self.recognizer.findMatchingTemplate( templates )
+		self._template = result['template'] 
+		self.scene.setTemplate(self._template)
+		self.updateTitle()
 
 	def recognizerChanged(self, recognizer):
 		rect = self.uiTool.box.rect 
@@ -477,8 +487,6 @@ class MainWindow(QMainWindow):
 			return
 
 		QApplication.setOverrideCursor( Qt.BusyCursor )
-		self.recognizer = Recognizer()
-		self.connect( self.recognizer, SIGNAL('finished()'), self.recognized )
 		self.recognizer.startRecognition( QImage(self.fileName) )
 
 	def recognized(self):

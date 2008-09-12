@@ -83,6 +83,7 @@
     </property>
     <addaction name="actionToggleImageBoxes" />
     <addaction name="actionToggleTemplateBoxes" />
+    <addaction name="actionToggleFeatureBoxes" />
     <addaction name="actionToggleBinarized" />
    </widget>
    <widget class="QMenu" name="menuEdit" >
