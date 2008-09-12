@@ -456,6 +456,7 @@ class MainWindow(QMainWindow):
 		self._template = result['template'] 
 		self.scene.setTemplate(self._template)
 		self.updateTitle()
+		QMessageBox.information( self, _('Template parameters'), _('Template found with offset (%d, %d)') % (result['xOffset'], result['yOffset']) )
 
 	def recognizerChanged(self, recognizer):
 		rect = self.uiTool.box.rect 
