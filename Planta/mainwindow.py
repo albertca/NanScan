@@ -176,7 +176,7 @@ class DocumentScene(QGraphicsScene):
 
 		for i in self.recognizer.boxes('barcode'):
 			#circle = QGraphicsEllipseItem( i.position.x(), i.position.y(), 40, 40 )
-			rect = QRectF( i.position.x(), i.position.y(), 40, 40 )
+			rect = QRectF( i.position.x() - 5, i.position.y() - 5, 10, 10 )
 			circle = QGraphicsEllipseItem( self.mapRectFromRecognizer( rect ) )
 			circle.setPen( self._circleItemPen )
 			circle.setBrush( self._circleItemBrush )
