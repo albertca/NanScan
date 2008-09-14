@@ -157,6 +157,7 @@ class Ocr:
 		# If we use 'if region:' instead of comparing with None
 		# rects with top (or left) >= bottom (or right), will return 
 		# False and thus return _all_ boxes instead of _none_.
+		# Indeed, 'if region:' is equivalent to 'if region.isValid():'
 		if region != None:
 			# Filter out boxes not in the given region
 			boxes = []
