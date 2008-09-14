@@ -119,6 +119,7 @@ class TemplateBoxItem(QGraphicsRectItem):
 		self.templateBox = None
 		if featureRect:
 			self.feature = QGraphicsRectItem(featureRect, self)
+			self.feature.setZValue( -1 )
 
 class DocumentScene(QGraphicsScene):
 
@@ -192,6 +193,9 @@ class DocumentScene(QGraphicsScene):
 		self.setTemplateBoxesVisible( self._templateBoxesVisible )
 
 	def mapRectFromRecognizer(self, rect):
+		# When there's no image loaded yet, return the same rect
+		if not self.dotsPerMillimeterX:
+			return rect
 		box = QRectF()
 		box.setX( rect.x() * self.dotsPerMillimeterX )
 		box.setY( rect.y() * self.dotsPerMillimeterY )
@@ -200,6 +204,9 @@ class DocumentScene(QGraphicsScene):
 		return box
 
 	def mapRectToRecognizer(self, rect):
+		# When there's no image loaded yet, return the same rect
+		if not self.dotsPerMillimeterX:
+			return rect
 		box = QRectF()
 		box.setX( rect.x() / self.dotsPerMillimeterX )
 		box.setY( rect.y() / self.dotsPerMillimeterY )
@@ -208,12 +215,18 @@ class DocumentScene(QGraphicsScene):
 		return box
 
 	def mapPointFromRecognizer(self, point):
+		# When there's no image loaded yet, return the same point
+		if not self.dotsPerMillimeterX:
+			return point
 		d = QPointF()
 		d.setX( point.x() * self.dotsPerMillimeterX )
 		d.setY( point.y() * self.dotsPerMillimeterY )
 		return d
 
 	def mapPointToRecognizer(self, point):
+		# When there's no image loaded yet, return the same point
+		if not self.dotsPerMillimeterX:
+			return point
 		d = QPointF()
 		d.setX( point.x() / self.dotsPerMillimeterX )
 		d.setY( point.y() / self.dotsPerMillimeterY )
@@ -343,11 +356,14 @@ class DocumentScene(QGraphicsScene):
 		if not self.isEnabled():
 			return
 		if self._mode == self.CreationMode:
-			item = self.itemAt( event.scenePos() )
-			if item and unicode(item.data( 0 ).toString()) == 'TemplateBox':
-				self.setActiveItem( item )
-				return
+			# Search if there's a TemplateBox where the user clicked
+			# If so, make the item active.
+			for item in self.items( event.scenePos() ):
+				if unicode(item.data(0).toString()) == 'TemplateBox':
+					self.setActiveItem( item )
+					return
 
+			# Otherwise, create a new template box
 			rect = QRectF(event.scenePos().x(), event.scenePos().y(), 1, 1)
 			self._selection = self.createTemplateBox( rect )
 		elif self._mode == self.SelectionMode:
@@ -371,6 +387,7 @@ class DocumentScene(QGraphicsScene):
 			self.emit( SIGNAL('newTemplateBox(QRectF)'), self.mapRectToRecognizer( rect ) )
 
 	def mouseMoveEvent(self, event):
+		self.emit( SIGNAL('mouseMoved'), event.scenePos() )
 		if not self.isEnabled():
 			return
 		if self._mode == self.CreationMode and self._selection:
@@ -414,6 +431,7 @@ class MainWindow(QMainWindow):
 
 		self.connect( self.scene, SIGNAL('newTemplateBox(QRectF)'), self.newTemplateBox )
 		self.connect( self.scene, SIGNAL('currentTemplateBoxChanged(PyQt_PyObject,PyQt_PyObject)'), self.currentTemplateBoxChanged)
+		self.connect( self.scene, SIGNAL('mouseMoved'), self.sceneMouseMoved )
 		self.connect( self.actionExit, SIGNAL('triggered()'), self.close )
 		self.connect( self.actionOpenImage, SIGNAL('triggered()'), self.openImage )
 		self.connect( self.actionOpenTemplate, SIGNAL('triggered()'), self.openTemplate )
@@ -428,7 +446,8 @@ class MainWindow(QMainWindow):
 		self.connect( self.actionDelete, SIGNAL('triggered()'), self.removeTemplateBox )
 		self.connect( self.actionZoom, SIGNAL('triggered()'), self.zoom )
 		self.connect( self.actionUnzoom, SIGNAL('triggered()'), self.unzoom )
-		self.connect( self.actionFindMatchingTemplate, SIGNAL('triggered()'), self.findMatchingTemplate )
+		self.connect( self.actionFindMatchingTemplateByOffset, SIGNAL('triggered()'), self.findMatchingTemplateByOffset )
+		self.connect( self.actionFindMatchingTemplateByText, SIGNAL('triggered()'), self.findMatchingTemplateByText )
 		self.toggleImageBoxes()
 		QTimer.singleShot( 1000, self.setup )
 		self.updateTitle()
@@ -446,17 +465,44 @@ class MainWindow(QMainWindow):
 		self.uiToolDock.setWidget( self.uiTool )
 
 		#rpc.session.login( 'http://admin:admin@127.0.0.1:8069', 'g1' )
+	def sceneMouseMoved(self, pos):
+		self.updatePosition( pos )
 
-	def findMatchingTemplate(self):
+	def findMatchingTemplateByOffset(self):
+		self.findMatchingTemplate( 'offset' )
+
+	def findMatchingTemplateByText(self):
+		self.findMatchingTemplate( 'text' )
+
+	def findMatchingTemplate(self, type):
+		if type == 'offset':
+			title = _('Template search by offset')
+		else:
+			title = _('Template search by text')
+
+		if not self.recognizer.image:
+			QMessageBox.information( self, title, _('No image opened. Please open an image to find a matching template.') )
+			return
+
 		if not rpc.session.logged():
 			if not self.login():
 				return 
 		templates = TemplateStorageManager.loadAll()
-		result = self.recognizer.findMatchingTemplate( templates )
+		time = QTime()
+		time.start()
+		if type == 'offset':
+			result = self.recognizer.findMatchingTemplateByOffset( templates )
+		else:
+			result = self.recognizer.findMatchingTemplateByText( templates )
+		elapsed = time.elapsed()
+		if not result['template']:
+			QMessageBox.information( self, title, _('No template found for the current image. Took %d milliseconds') % elapsed )
+			return
 		self._template = result['template'] 
 		self.scene.setTemplate(self._template)
 		self.updateTitle()
-		QMessageBox.information( self, _('Template parameters'), _('Template found with offset (%d, %d)') % (result['xOffset'], result['yOffset']) )
+		QMessageBox.information( self, title, _('Template found with offset (%d, %d) in %d milliseconds') % (result['xOffset'], result['yOffset'], elapsed) )
+		
 
 	def recognizerChanged(self, recognizer):
 		rect = self.uiTool.box.rect 
@@ -631,7 +677,13 @@ class MainWindow(QMainWindow):
 				server = _('Press %s to login') % shortcut
 			else:
 				server = 'not logged in'
-		self.statusBar().showMessage( server )
+		self.uiServer.setText( server )
+
+	def updatePosition(self, pos):
+		pos = self.uiView.mapToScene( self.uiView.mapFromGlobal( QCursor.pos() ) )
+		pos = self.scene.mapPointToRecognizer( pos )
+		position = _('(%.2f, %.2f)') % (pos.x(), pos.y())
+ 		self.uiPosition.setText( position )
 
 	def updateActions(self):
 		# Allow deleting if there's a TemplateBox selected

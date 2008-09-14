@@ -18,10 +18,10 @@
      <x>0</x>
      <y>48</y>
      <width>709</width>
-     <height>417</height>
+     <height>439</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" >
+   <layout class="QHBoxLayout" name="horizontalLayout_2" >
     <item>
      <layout class="QVBoxLayout" >
       <item>
@@ -41,7 +41,7 @@
            <x>0</x>
            <y>20</y>
            <width>70</width>
-           <height>377</height>
+           <height>399</height>
           </rect>
          </property>
         </widget>
@@ -50,7 +50,58 @@
      </layout>
     </item>
     <item>
-     <widget class="QGraphicsView" name="uiView" />
+     <layout class="QVBoxLayout" name="verticalLayout" >
+      <item>
+       <widget class="QGraphicsView" name="uiView" />
+      </item>
+      <item>
+       <widget class="QFrame" name="frame" >
+        <property name="sizePolicy" >
+         <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="frameShape" >
+         <enum>QFrame::VLine</enum>
+        </property>
+        <property name="frameShadow" >
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="uiServer" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text" >
+            <string>TextLabel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="uiPosition" >
+           <property name="sizePolicy" >
+            <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text" >
+            <string>(0, 0)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -96,22 +147,13 @@
     <property name="title" >
      <string>&amp;Actions</string>
     </property>
-    <addaction name="actionFindMatchingTemplate" />
+    <addaction name="actionFindMatchingTemplateByOffset" />
+    <addaction name="actionFindMatchingTemplateByText" />
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
    <addaction name="menu_Actions" />
    <addaction name="menuView" />
-  </widget>
-  <widget class="QStatusBar" name="statusbar" >
-   <property name="geometry" >
-    <rect>
-     <x>0</x>
-     <y>465</y>
-     <width>709</width>
-     <height>22</height>
-    </rect>
-   </property>
   </widget>
   <widget class="QToolBar" name="toolBar" >
    <property name="geometry" >
@@ -239,9 +281,14 @@
     <string>Show Feature Boxes</string>
    </property>
   </action>
-  <action name="actionFindMatchingTemplate" >
+  <action name="actionFindMatchingTemplateByOffset" >
    <property name="text" >
-    <string>Find Matching Template</string>
+    <string>Find Matching Template by &amp;Offset</string>
+   </property>
+  </action>
+  <action name="actionFindMatchingTemplateByText" >
+   <property name="text" >
+    <string>Find Matching Template by &amp;Text</string>
    </property>
   </action>
  </widget>
