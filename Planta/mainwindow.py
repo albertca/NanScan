@@ -501,7 +501,7 @@ class MainWindow(QMainWindow):
 		self._template = result['template'] 
 		self.scene.setTemplate(self._template)
 		self.updateTitle()
-		QMessageBox.information( self, title, _('Template found with offset (%d, %d) in %d milliseconds') % (result['xOffset'], result['yOffset'], elapsed) )
+		QMessageBox.information( self, title, _('Template found with offset (%.2f, %.2f) in %d milliseconds') % (result['xOffset'], result['yOffset'], elapsed) )
 		
 
 	def recognizerChanged(self, recognizer):

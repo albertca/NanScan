@@ -25,6 +25,7 @@ from template import *
 from document import *
 from trigram import *
 from hamming import *
+from levenshtein import *
 from translator import *
 
 import tempfile
@@ -219,13 +220,15 @@ class Recognizer(QObject):
 			# Apply template with offset found
 			currentDocument = self.extractWithTemplate( template, offset.x(), offset.y() )
 			for documentBox in currentDocument.boxes:
-				templateBox = documentBox.templateBox
+				print "Applying..."
 				if documentBox.templateBox.type != 'matcher':
 					continue
+				templateBox = documentBox.templateBox
 				matcherBoxes += 1
 				similarity = Trigram.trigram( documentBox.text, templateBox.text )
 				score += similarity
 			score = score / matcherBoxes
+			print "Score: ", score
 			if score > max:
 				max = score
 				best = { 
@@ -253,16 +256,30 @@ class Recognizer(QObject):
 			if templateBox.type != 'matcher':
 				continue
 
-			templateBox.ranges = Range.extractAllRangesFromDocument(lines, len(templateBox.text))
+			templateBoxText = templateBox.text.strip()
+			templateBox.ranges = Range.extractAllRangesFromDocument(lines, len(templateBoxText))
 			for ran in templateBox.ranges:
 				text = ran.text()
-				value = Hamming.hamming( text, templateBox.text, translator )
+				#value = Hamming.hamming( text, templateBoxText, translator )
+				#value = 1.0 - Trigram.trigram( text, templateBoxText )
+				value = Levenshtein.levenshtein( text, templateBoxText )
 				ran.distance = value
+				#print "Comparison: '%s', '%s', '%f'" % (text.encode('ascii','ignore'), templateBoxText, value)
+
+			#five = u'|'.join( [ x.text().encode('ascii','ignore') for x in templateBox.ranges[0:200] ])
+			#print 'First five ranges: ', five
+
 			templateBox.ranges.sort( rangeDistanceComparison )
+
+			for x in templateBox.ranges[0:20]:
+				print "Comparison: '%s', '%s', '%f'" % (x.text().encode('ascii','replace'), templateBoxText, x.distance)
+				
+			#five = u'|'.join( [ x.text().encode('ascii','ignore') for x in templateBox.ranges[0:10] ])
+			#print 'First five ranges: ', five
 
 			if templateBox.ranges:
 				bestRange = templateBox.ranges[0]
-				print "The best match for template box '%s' is '%s'" % (templateBox.text, bestRange.text() )
+				print "The best match for template box '%s' is '%s' with distance %d" % (templateBoxText, bestRange.text().encode('ascii','replace'), bestRange.distance )
 			matchers.append( templateBox )
 
 		# Once we have all ranges sorted for each template box we search which
@@ -272,27 +289,32 @@ class Recognizer(QObject):
 		for ranges in iterator:
 			documentBoxCenter = ranges[0].rect().center()
 			templateBoxCenter = matchers[0].featureRect.center()
-			diff = templateBoxCenter - documentBoxCenter
-			print "Difference: ", diff
+			diff = documentBoxCenter - templateBoxCenter 
+			#print "Difference: ", diff
+			#print "Document: ", documentBoxCenter
+			#print "Template: ", templateBoxCenter
 			found = True
 			for pos in range(1,len(ranges)):
 				documentBoxCenter = ranges[pos].rect().center()
 				templateBoxCenter = matchers[pos].featureRect.center()
-				d = templateBoxCenter - documentBoxCenter
+				d = documentBoxCenter - templateBoxCenter
 				# If difference of relative positions of boxes between 
 				# template and document are bigger than 5mm we discard 
 				# the ranges
-				print "Difference in loop: ", d
-				if ( abs(d.x()) + 5.0 > abs(diff.x()) ):
+				#print "Difference in loop: ", d
+				#print "Document: %s, %s" % ( documentBoxCenter, ranges[pos].rect() )
+				#print "Template: ", templateBoxCenter
+				#print "Comparison: %s  --- %s" % (abs(d.x()) + 5.0, abs(diff.x() ) )
+				if abs(d.x() - diff.x()) > 5:
 					found = False
 					break
-				if ( abs(d.y()) + 5.0 > abs(diff.y()) ):
+				if abs(d.y() - diff.y()) > 5:
 					found = False
 					break
 			if found:
 				break
 			i += 1
-			if i > 10:
+			if i > 1000:
 				break
 		if found:
 			return diff
@@ -313,21 +335,21 @@ class TemplateBoxRangeIterator:
 	def next(self):
 		result = []	
 		for x in range(len(self.boxes)):
-			result.append( self.boxes[x].ranges[ self.pos[x] ] )
+			result.append( self.boxes[x].ranges[ self.loopPos[x] ] )
 
-		print '----'
-		print (u', '.join( [x.text() for x in result] )).encode('ascii', 'ignore')
-		print self.pos
-		print self.loopPos
+		#print '----'
+		#print (u', '.join( [x.text() for x in result] )).encode('ascii', 'replace')
+		#print self.pos
+		#print self.loopPos
 		if self.loopPos == self.pos:
 			# Search next value to add
 			value = float('infinity')
 			pos = 0
 			for x in range(len(self.pos)):
-				if x >= len(self.boxes[x].ranges) - 1:
+				if self.pos[x] >= len(self.boxes[x].ranges) - 1:
 					continue
-				if self.pos[x] < value:
-					value = self.pos[x]
+				if self.boxes[x].ranges[ self.pos[x] + 1 ].distance < value:
+					value = self.boxes[x].ranges[ self.pos[x] + 1 ].distance
 					self.added = x
 			# If value is Infinity it means that we reached the end
 			# of all possible iterations
@@ -385,7 +407,7 @@ class Range:
 			return []
 		ranges = []
 		for line in range(len(lines)):
-			if length > len(lines[line]):
+			if length >= len(lines[line]):
 				ran = Range()
 				ran.line = line
 				ran.pos = 0
@@ -393,7 +415,7 @@ class Range:
 				ran.document = lines
 				ranges.append( ran )
 				continue
-			for pos in range(len(lines[line]) - length):
+			for pos in range(len(lines[line]) - length + 1):
 				ran = Range()
 				ran.line = line
 				ran.pos = pos
