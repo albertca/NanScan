@@ -154,7 +154,10 @@ class Ocr:
 	#   4- Go to number 2 until all boxes have been processed.
 	#   5- Sort the characters of each line by the y coordinate.
 	def textLines(self, region=None):
-		if region:
+		# If we use 'if region:' instead of comparing with None
+		# rects with top (or left) >= bottom (or right), will return 
+		# False and thus return _all_ boxes instead of _none_.
+		if region != None:
 			# Filter out boxes not in the given region
 			boxes = []
 			for x in self.boxes:
@@ -203,8 +206,6 @@ class Ocr:
 		# results, by now, on text with the same char size in the line,
 		# which is quite usual.
 
-		# Note we must always use unicode strings
-		text = u''
 		for line in lines:
 			width = 0
 			count = 0
