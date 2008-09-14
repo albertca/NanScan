@@ -49,7 +49,9 @@ class Hamming:
 				value += 1
 				continue
 			value += 2
-		value += abs( len(text1) - len(text2) )
+		# Note that we need to multiply by 2 because 'errors' weight 2
+		# and 'semi-errors' weight 1
+		value += abs( len(text1) - len(text2) ) * 2
 		return value
 
 if __name__ == '__main__':
