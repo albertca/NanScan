@@ -20,12 +20,15 @@ class Levenshtein:
 
 	@staticmethod
 	def levenshtein( text1, text2 ):
-		d = []
-		# Should use an array instead..
-		for i in range(len(text1)):
-			d.append( [] )
-			for j in range(len(text2)):
-				d[i].append(0)
+		# Levenshtein distance if one string is empty, is the
+		# length of the other string, len(text) inserts.
+		if len(text1) == 0:
+			return len(text2)
+		if len(text2) == 0:
+			return len(text1)
+
+		# Build array of len(text1) * len(text2)
+		d = [ [0] * len(text2) ] * len(text1)
 
 		for i in range(len(text1)):
 			d[i][0] = i
