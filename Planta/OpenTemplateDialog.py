@@ -28,9 +28,9 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.uic import *
-import rpc
-from widget.model.group import *
-from widget.model.treemodel import *
+from Koo import Rpc
+from Koo.Model.Group import ModelRecordGroup
+from Koo.Model.KooModel import KooModel
 
 class OpenTemplateDialog(QDialog):
 	def __init__(self, parent=None):
@@ -38,14 +38,16 @@ class OpenTemplateDialog(QDialog):
 		loadUi( 'opentemplate.ui', self )
 
 		visible = ['name', 'boxes']
-		self.fields = rpc.session.execute('/object', 'execute', 'nan.template', 'fields_get', visible)
-		ids = rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
+		print Rpc.session.url
+		print 'open: ', Rpc.session
+		self.fields = Rpc.session.execute('/object', 'execute', 'nan.template', 'fields_get', visible)
+		ids = Rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
 		self.group = ModelRecordGroup( 'nan.template', self.fields, ids )
-		self.treeModel = TreeModel( self )
+		self.treeModel = KooModel( self )
 		self.treeModel.setModelGroup( self.group )
 		self.treeModel.setFields( self.fields )
 		self.treeModel.setShowBackgroundColor( False )
-		self.treeModel.setMode( TreeModel.ListMode )
+		self.treeModel.setMode( KooModel.ListMode )
 		self.treeModel.setFieldsOrder( ['name', 'boxes'] )
 
 		self.treeView.setModel( self.treeModel )

@@ -149,6 +149,7 @@
     </property>
     <addaction name="actionFindMatchingTemplateByOffset" />
     <addaction name="actionFindMatchingTemplateByText" />
+    <addaction name="actionDeskew" />
    </widget>
    <addaction name="menuFile" />
    <addaction name="menuEdit" />
@@ -289,6 +290,11 @@
   <action name="actionFindMatchingTemplateByText" >
    <property name="text" >
     <string>Find Matching Template by &amp;Text</string>
+   </property>
+  </action>
+  <action name="actionDeskew" >
+   <property name="text" >
+    <string>Deskew</string>
    </property>
   </action>
  </widget>

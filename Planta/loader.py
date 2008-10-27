@@ -31,13 +31,13 @@ import os
 import sys
 import glob
 import base64
-import rpc
+from Koo import Rpc
 
 if len(sys.argv) != 3:
 	print 'loader.py database directory'
 	sys.exit(1)
 
-rpc.session.login( 'http://admin:admin@127.0.0.1:8069', sys.argv[1] )
+Rpc.session.login( 'http://admin:admin@127.0.0.1:8069', sys.argv[1] )
 
 files = glob.glob(sys.argv[2] + "/*.png")
 print "F: ", files
@@ -46,5 +46,5 @@ for x in files:
 	fields = {}
 	fields['name'] = os.path.split(x)[1]
 	fields['datas'] = base64.encodestring(open(x, 'rb').read())
-	rpc.session.execute('/object', 'execute', 'nan.document', 'create', fields )
-	
+	Rpc.session.execute('/object', 'execute', 'nan.document', 'create', fields )
+

@@ -28,26 +28,27 @@
 ##############################################################################
 
 
-from common import localization
-localization.initializeTranslations()
+from Koo.Common import Localization
+Localization.initializeTranslations()
 
 # Load this after localization as these modules depend on it
-from common import notifier, common
+from Koo.Common import Notifier, Common
 
 # Declare notifier handlers for the whole application
-notifier.errorHandler = common.error
-notifier.warningHandler = common.warning
+Notifier.errorHandler = Common.error
+Notifier.warningHandler = Common.warning
+Notifier.concurrencyErrorHandler = Common.concurrencyError
 
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 import sys
-from mainwindow import *
+from MainWindow import *
 
 
 app = QApplication( sys.argv )
 
-localization.initializeQtTranslations()
+Localization.initializeQtTranslations()
 window = MainWindow()
 window.show()
 app.exec_()

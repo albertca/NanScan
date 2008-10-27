@@ -26,18 +26,18 @@
 ##############################################################################
 
 from NaNScaN.template import *
-import rpc
-from widget.model.group import *
+from Koo import Rpc
+from Koo.Model.Group import *
 
 class TemplateStorageManager:
 	@staticmethod
 	def save(template):
 		if template.id:
-			rpc.session.call( '/object', 'execute', 'nan.template', 'write', [template.id], {'name': template.name } )
-			ids = rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',template.id)] )
-			rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
+			Rpc.session.call( '/object', 'execute', 'nan.template', 'write', [template.id], {'name': template.name } )
+			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',template.id)] )
+			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
 		else:
-			template.id = rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': template.name } )
+			template.id = Rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': template.name } )
 		for x in template.boxes:
 			values = { 
 				'x': x.rect.x(), 
@@ -55,12 +55,12 @@ class TemplateStorageManager:
 				'type': x.type, 
 				'filter': x.filter 
 			}
-			rpc.session.call( '/object', 'execute', 'nan.template.box', 'create', values )
+			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'create', values )
 	
 	@staticmethod
 	def load(id):
 
-		fields = rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get')
+		fields = Rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get')
 		
 		model.value('boxes').addFields( fields )
 		for x in model.value('boxes'):
@@ -78,11 +78,11 @@ class TemplateStorageManager:
 	@staticmethod
 	def loadAll():
 		fields = ['name', 'boxes']
-		templateFields = rpc.session.execute('/object', 'execute', 'nan.template', 'fields_get', fields)
+		templateFields = Rpc.session.execute('/object', 'execute', 'nan.template', 'fields_get', fields)
 		fields = ['x', 'y', 'width', 'height', 'feature_x', 'feature_y', 'feature_width', 
 			'feature_height', 'name', 'text', 'recognizer', 'type', 'filter' ]
-		boxFields = rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get', fields)
-		ids = rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
+		boxFields = Rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get', fields)
+		ids = Rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
 		group = ModelRecordGroup( 'nan.template', templateFields, ids )
 		templates = []
 		for record in group:

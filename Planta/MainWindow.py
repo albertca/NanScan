@@ -34,11 +34,11 @@ from NaNScaN.recognizer import *
 
 
 from TemplateStorageManager import *
-from opentemplatedialog import *
-from commands import *
+from OpenTemplateDialog import *
+from Commands import *
 
-from modules.gui.login import LoginDialog
-import rpc
+from Koo.Dialogs.LoginDialog import LoginDialog
+from Koo import Rpc
 
 class ToolWidget(QWidget):
 
@@ -453,6 +453,12 @@ class MainWindow(QMainWindow):
 		self.updateTitle()
 		self.updateActions()
 
+		# Login defaults
+		LoginDialog.defaultHost = 'localhost'
+		LoginDialog.defaultPort = 8070
+		LoginDialog.defaultProtocol = 'socket://'
+		LoginDialog.defaultUserName = 'admin'
+
 		self.recognizer = Recognizer()
 		self.connect( self.recognizer, SIGNAL('finished()'), self.recognized )
 
@@ -464,7 +470,7 @@ class MainWindow(QMainWindow):
 		self.uiTool.show()
 		self.uiToolDock.setWidget( self.uiTool )
 
-		#rpc.session.login( 'http://admin:admin@127.0.0.1:8069', 'g1' )
+		#Rpc.session.login( 'http://admin:admin@127.0.0.1:8069', 'g1' )
 	def sceneMouseMoved(self, pos):
 		self.updatePosition( pos )
 
@@ -484,7 +490,7 @@ class MainWindow(QMainWindow):
 			QMessageBox.information( self, title, _('No image opened. Please open an image to find a matching template.') )
 			return
 
-		if not rpc.session.logged():
+		if not Rpc.session.logged():
 			if not self.login():
 				return 
 		templates = TemplateStorageManager.loadAll()
@@ -565,14 +571,10 @@ class MainWindow(QMainWindow):
 		self.uiView.scale( 0.8, 0.8 )
 
 	def login(self):
-		LoginDialog.defaultHost = 'localhost'
-		LoginDialog.defaultPort = 8070
-		LoginDialog.defaultProtocol = 'socket://'
-		LoginDialog.defaultUserName = 'admin'
 		dialog = LoginDialog( self )
 		if dialog.exec_() == QDialog.Rejected:
 			return False
-		if rpc.session.login( dialog.url, dialog.databaseName ) > 0:
+		if Rpc.session.login( dialog.url, dialog.databaseName ) > 0:
 			self.updateTitle()
 			return True
 		else:
@@ -592,7 +594,7 @@ class MainWindow(QMainWindow):
 
 	def saveTemplate(self):
 		self.uiTool.store()
-		if not rpc.session.logged():
+		if not Rpc.session.logged():
 			if not self.login():
 				return False
 
@@ -604,11 +606,11 @@ class MainWindow(QMainWindow):
 				
 
 		if self._template.id:
-			rpc.session.call( '/object', 'execute', 'nan.template', 'write', [self._template.id], {'name': self._template.name } )
-			ids = rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',self._template.id)] )
-			rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
+			Rpc.session.call( '/object', 'execute', 'nan.template', 'write', [self._template.id], {'name': self._template.name } )
+			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',self._template.id)] )
+			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
 		else:
-			self._template.id = rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': self._template.name } )
+			self._template.id = Rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': self._template.name } )
 		for x in self._template.boxes:
 			values = { 
 				'x': x.rect.x(), 
@@ -626,7 +628,7 @@ class MainWindow(QMainWindow):
 				'type': x.type, 
 				'filter': x.filter 
 			}
-			rpc.session.call( '/object', 'execute', 'nan.template.box', 'create', values )
+			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'create', values )
 		self.updateTitle()
 		return True
 
@@ -638,10 +640,11 @@ class MainWindow(QMainWindow):
 		self.updateTitle()
 
 	def openTemplate(self):
-		if not rpc.session.logged():
+		if not Rpc.session.logged():
 			if not self.login():
 				return
 
+		print "DDDDD: ", Rpc.session
 		dialog = OpenTemplateDialog(self)
 		if dialog.exec_() == QDialog.Rejected:
 			return
@@ -649,7 +652,7 @@ class MainWindow(QMainWindow):
 		self._template = Template( model.value('name') )
 		self._template.id = model.id
 
-		fields = rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get')
+		fields = Rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get')
 		model.value('boxes').addFields( fields )
 		for x in model.value('boxes'):
 			box = TemplateBox()
@@ -669,8 +672,8 @@ class MainWindow(QMainWindow):
 	def updateTitle(self):
 		self.setWindowTitle( "Planta - [%s]" % self._template.name )
 		
-		if rpc.session.logged():
-			server = '%s [%s]' % (rpc.session.url, rpc.session.databaseName)
+		if Rpc.session.logged():
+			server = '%s [%s]' % (Rpc.session.url, Rpc.session.databaseName)
 		else:
 			shortcut = unicode( self.actionLogin.shortcut().toString() )
 			if shortcut:
