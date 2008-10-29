@@ -262,13 +262,13 @@ class Ocr:
 	## @brief Returns the text in the given region as a string. Spaces included.
 	def formatedText(self, region=None):
 		lines = self.textLinesWithSpaces( region )
+		texts = []
 		text = u''
 		for line in lines:
 			for c in line:
 				text += c.character
-			text += u'\n'
-
-		return text
+			texts.append(text)
+		return u'\n'.join( texts )
 
 	## @brief Calculates slope of text lines
 	# This value is used by deskew() function to rotate image and
