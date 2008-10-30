@@ -607,7 +607,7 @@ class MainWindow(QMainWindow):
 
 		if self._template.id:
 			Rpc.session.call( '/object', 'execute', 'nan.template', 'write', [self._template.id], {'name': self._template.name } )
-			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',self._template.id)] )
+			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template','=',self._template.id)] )
 			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
 		else:
 			self._template.id = Rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': self._template.name } )
@@ -621,7 +621,7 @@ class MainWindow(QMainWindow):
 				'feature_y' : x.featureRect.y(),
 				'feature_width' : x.featureRect.width(),
 				'feature_height' : x.featureRect.height(),
-				'template_id': self._template.id, 
+				'template': self._template.id, 
 				'name': x.name, 
 				'text': x.text, 
 				'recognizer': x.recognizer, 

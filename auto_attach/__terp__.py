@@ -35,7 +35,8 @@
 	"category" : "Generic Modules/Attachments",
 	"init_xml" : [],
 	"demo_xml" : [],
-	"update_xml" : ["auto_attach_view.xml", "auto_attach_wizard.xml", "auto_attach_workflow.xml"],
+	"update_xml" : ["auto_attach_view.xml", "auto_attach_wizard.xml", 
+		"auto_attach_workflow.xml", "auto_attach_data.xml"],
 	"active": False,
 	"installable": True
 }

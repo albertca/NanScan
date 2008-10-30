@@ -10,7 +10,7 @@
 				<tree string="Documents in queue">
 					<field name="name"/>
 					<field name="state"/>
-					<field name="template_id"/>
+					<field name="template"/>
 				</tree>
 			</field>
 		</record>
@@ -24,16 +24,20 @@
 						<page string="General">
 							<field name="name"/>
 							<field name="state"/>
-							<field name="template_id"/> 
+							<field name="template"/> 
 							<field name="document"/>
 							<separator string="Task"/>
 							<field name="task" nolabel="1" colspan="4"/>
 							<separator string="Image"/>
 							<field name="datas" widget="image" img_width="300" img_height="300" nolabel="1" colspan="4"/>
 							<group colspan="4">
-								<button name="scan_document" states="pending" string="Scan Document"/>
-								<button name="verify_document" states="scanned" string="Verify Document"/>
-								<button name="process_document" states="verified" string="Process Document"/>
+								<button name="scan_document" states="pending" string="Scan document"/>
+								<button name="pending_to_scanning" states="pending" string="Scan document in the background"/>
+								<button name="verify_document" states="scanned" string="Verify document"/>
+								<button name="scanned_to_pending" states="scanned" string="Back to pending"/>
+								<button name="process_document" states="verified" string="Process document"/>
+								<button name="verified_to_processing" states="verified" string="Process document in the background"/>
+								<button name="verified_to_scanned" states="verified" string="Unset verified"/>
 							</group>
 						</page>
 						<page string="Properties">
@@ -41,10 +45,12 @@
 								<form string="Properties">
 									<field name="name"/>
 									<field name="value"/>
+									<field name="template_box"/>
 								</form>
 								<tree string="Properties">
 									<field name="name"/>
 									<field name="value"/>
+									<field name="template_box"/>
 								</tree>
 							</field>
 						</page>

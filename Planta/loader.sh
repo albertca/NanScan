@@ -1,5 +1,5 @@
 #!/bin/bash
 
-export PYTHONPATH=../../ktiny/bin
+export PYTHONPATH=/home/albert/d/koo
 ./loader.py $1 $2
 

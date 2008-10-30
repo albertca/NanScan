@@ -34,7 +34,7 @@ class TemplateStorageManager:
 	def save(template):
 		if template.id:
 			Rpc.session.call( '/object', 'execute', 'nan.template', 'write', [template.id], {'name': template.name } )
-			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template_id','=',template.id)] )
+			ids = Rpc.session.call( '/object', 'execute', 'nan.template.box', 'search', [('template','=',template.id)] )
 			Rpc.session.call( '/object', 'execute', 'nan.template.box', 'unlink', ids )
 		else:
 			template.id = Rpc.session.call( '/object', 'execute', 'nan.template', 'create', {'name': template.name } )
@@ -48,7 +48,7 @@ class TemplateStorageManager:
 				'feature_y' : x.featureRect.y(),
 				'feature_width' : x.featureRect.width(),
 				'feature_height' : x.featureRect.height(),
-				'template_id': template.id, 
+				'template': template.id, 
 				'name': x.name, 
 				'text': x.text, 
 				'recognizer': x.recognizer, 

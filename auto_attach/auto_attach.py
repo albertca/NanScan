@@ -46,10 +46,10 @@ class nan_template(osv.osv):
 	_name = 'nan.template'
 	_columns = {
 		'name' : fields.char('Name', 64, required=True),
-		'boxes' : fields.one2many('nan.template.box', 'template_id', 'Boxes'),
+		'boxes' : fields.one2many('nan.template.box', 'template', 'Boxes'),
 		'attach_function' : fields.char('Attachment Function', 256),
 		'action_function' : fields.char('Action Function', 256),
-		'documents' : fields.one2many('nan.document', 'template_id', 'Documents')
+		'documents' : fields.one2many('nan.document', 'template', 'Documents')
 	}
 
 	# Returns a Template from the fields of a template. You'll usually use 
@@ -57,10 +57,11 @@ class nan_template(osv.osv):
 	def getTemplateFromData(self, cr, uid, data):
 		template = Template( data['name'] )
 		template.id = data['id']
-		ids = self.pool.get('nan.template.box').search( cr, uid, [('template_id','=',data['id'])] )
+		ids = self.pool.get('nan.template.box').search( cr, uid, [('template','=',data['id'])] )
 		boxes = self.pool.get('nan.template.box').read(cr, uid, ids)
 		for y in boxes:
 			box = TemplateBox()
+			box.id = y['id']
 			box.rect = QRectF( y['x'], y['y'], y['width'], y['height'] )
 			box.name = y['name']
 			box.text = y['text']
@@ -97,7 +98,7 @@ nan_template()
 class nan_template_box(osv.osv):
 	_name = 'nan.template.box'
 	_columns = {
-		'template_id' : fields.many2one('nan.template', 'Template', required=True, ondelete='cascade'),
+		'template' : fields.many2one('nan.template', 'Template', required=True, ondelete='cascade'),
 		'x' : fields.float('X'),
 		'y' : fields.float('Y'),
 		'width' : fields.float('Width'),
@@ -125,12 +126,13 @@ class nan_document(osv.osv):
 	_columns = {
 		'name' : fields.char('Name', 64),
 		'datas': fields.binary('Data'),
-		'properties': fields.one2many('nan.document.property', 'document_id', 'Properties'),
-		'template_id': fields.many2one('nan.template', 'Template' ),
+		'properties': fields.one2many('nan.document.property', 'document', 'Properties'),
+		'template': fields.many2one('nan.template', 'Template' ),
 		'document': fields.reference('Document', selection=attachableDocuments, size=128),
 		'task' : fields.text('Task', readonly=True),
-		'state': fields.selection( [('pending','Pending'),('scanned','Scanned'),
-			('verified','Verified'),('processed','Processed')], 
+		'state': fields.selection( [('pending','Pending'),('scanning','Scanning'),
+			('scanned','Scanned'), ('verified','Verified'),('processing','Processing'),
+			('processed','Processed')], 
 			'State', required=True, readonly=True )
 	}
 	_defaults = {
@@ -142,20 +144,31 @@ class nan_document(osv.osv):
 		# the meanwhile" would be thrown, so by now check which of the records
 		# we'll want to scan later
 		toScan = []
-		if 'template_id' in values:
-			for x in self.read( cr, uid, ids, ['state', 'template_id'], context ):
-				# We only scan the document if template_id has changed and the document
+		if 'template' in values:
+			for x in self.read( cr, uid, ids, ['state', 'template'], context ):
+				# We only scan the document if template has changed and the document
 				# is in 'scanned' state.
-				if x['state'] == 'scanned' and x['template_id'] != values['template_id']:
-					toScan.append( {'id': x['id'], 'template_id': values['template_id'] } )
+				if x['state'] == 'scanned' and x['template'] != values['template']:
+					toScan.append( {'id': x['id'], 'template': values['template'] } )
 
 		ret = super(nan_document, self).write(cr, uid, ids, values, context)
 
 		for x in toScan:
-			self.scanDocumentWithTemplate( cr, uid, x['id'], x['template_id'] )
+			self.scanDocumentWithTemplate( cr, uid, x['id'], x['template'] )
 		return ret
 
-	def scan_document(self, cr, uid, imageIds):
+	def scan_document_background(self, cr, uid, imageIds):
+		self.pool.get('ir.cron').create(cr, uid, {
+			'name': 'Scan document',
+			'user_id': uid,
+			'model': 'nan.document',
+			'function': 'scan_document',
+			'args': repr([ imageIds, True ])
+		})
+		cr.commit()
+
+	# If notify=True sends a request/notification to uid
+	def scan_document(self, cr, uid, imageIds, notify=False):
 		# Load templates into 'templates' list
 		templates = self.pool.get('nan.template').getAllTemplates( cr, uid )
 
@@ -165,15 +178,14 @@ class nan_document(osv.osv):
 
 		# Iterate over all images and try to find the most similar template
 		for document in self.browse(cr, uid, imageIds):
-			#TODO: Enable workflow test 
-			#if document.state != 'pending':
-			#	continue
+			if document.state not in ('pending','scanning'):
+				continue
 			fp, image = tempfile.mkstemp()
 			fp = os.fdopen( fp, 'wb+' )
 			fp.write( base64.decodestring(document.datas) )
 			fp.close()
-			recognizer.recognize( image )
-			result = recognizer.findMatchingTemplate( templates )
+			recognizer.recognize( QImage( image ) )
+			result = recognizer.findMatchingTemplateByOffset( templates )
 			template = result['template']
 			doc = result['document']
 			if not template:
@@ -185,14 +197,29 @@ class nan_document(osv.osv):
 				template_id = template.id
 			else:
 				template_id = False
-			self.write(cr, uid, [document.id], {'template_id': template_id, 'state': 'scanned'})
+			self.write(cr, uid, [document.id], {'template': template_id, 'state': 'scanned'})
 			if doc:
 				obj = self.pool.get('nan.document.property')
 				for box in doc.boxes:
-					obj.create(cr, uid, { 'name' : box.templateBox.name, 'value' : box.text, 'document_id': document.id } )
+					obj.create(cr, uid, { 
+						'name': box.templateBox.name, 
+						'value': box.text, 
+						'document': document.id,
+						'template_box': box.templateBox.id
+					})
+
+			if notify:
+				self.pool.get('res.request').create( cr, uid, {
+					'act_from': uid,
+					'act_to': uid,
+					'name': 'Finished scanning document',
+					'body': 'The auto_attach system has finished scanning the document you requested. A reference to the document can be found in field Document Ref 1.',
+					'ref_doc1': 'nan.document,%d' % document.id,
+				})
 
 		self.executeAttachs( cr, uid, imageIds )
 		self.executeActions( cr, uid, imageIds, True )
+
 		cr.commit()
 
 	def scanDocumentWithTemplate(self, cr, uid, documentId, templateId):
@@ -200,7 +227,7 @@ class nan_document(osv.osv):
 		# Whether templateId is valid or not
 		# Remove previous properties
 		obj = self.pool.get('nan.document.property')
-		ids = obj.search( cr, uid, [('document_id','=',documentId)] )
+		ids = obj.search( cr, uid, [('document','=',documentId)] )
 		obj.unlink( cr, uid, ids )
 
 		if templateId:
@@ -224,7 +251,12 @@ class nan_document(osv.osv):
 			doc = recognizer.extractWithTemplate( image, template )
 
 			for box in doc.boxes:
-				obj.create(cr, uid, { 'name' : box.templateBox.name, 'value' : box.text, 'document_id': document['id'] } )
+				obj.create(cr, uid, {
+					'name': box.templateBox.name, 
+					'value': box.text, 
+					'document': document['id'],
+					'template_box': box.templateBox.id
+				})
 		self.executeAttachs( cr, uid, [documentId] )
 		self.executeActions( cr, uid, [documentId], True )
 		cr.commit()
@@ -259,13 +291,14 @@ class nan_document(osv.osv):
 
 	def executeActions( self, cr, uid, ids, explain ):
 		for document in self.browse( cr, uid, ids ):
-			#TODO: Enable workflow test 
-			#if not explain and document.state != 'verified':
-				#continue
+			print "Executing action on document with state ", document.state
+			if not explain and document.state not in ('verified','processing'):
+				continue
 
+			print "Yes"
 			task = None
-			if document.template_id:
-				function = document.template_id.action_function
+			if document.template:
+				function = document.template.action_function
 				if function:
 					properties = dict( [(x.name, unicode(x.value)) for x in document.properties] )
 					(name, parameters) = self._parseFunction(function, properties)
@@ -279,23 +312,22 @@ class nan_document(osv.osv):
 				ref = document.document.split(',')
 				model = ref[0]
 				id = ref[1]
-				attach = { 
+				self.pool.get( 'ir.attachment' ).create( cr, uid, { 
 					'res_id': id,
 					'res_model': model,
 					'name': document.name,
 					'datas': document.datas,
 					'datas_fname': document.name,
-					'description': 'Attached automatically'
-				}
-				self.pool.get( 'ir.attachment' ).create( cr, uid, attach )
+					'description': 'Document attached automatically'
+				})
 				self.write(cr, uid, [document.id], {'state': 'processed'})
 
 
 	def executeAttachs( self, cr, uid, ids ):
 		for document in self.browse( cr, uid, ids ):
 			reference = None
-			if document.template_id:
-				function = document.template_id.attach_function
+			if document.template:
+				function = document.template.attach_function
 				if function:
 					properties = dict( [(x.name, unicode( x.value, 'latin-1' )) for x in document.properties] )
 
@@ -357,6 +389,8 @@ class nan_document_property(osv.osv):
 	_columns = {
 		'name' : fields.char('Text', 256),
 		'value' : fields.char('Value', 256),
-		'document_id' : fields.many2one('nan.document', 'Document', required=True, ondelete='cascade')
+		'document' : fields.many2one('nan.document', 'Document', required=True, ondelete='cascade'),
+		'template_box' : fields.many2one('nan.template.box', 'Template Box', required=True, ondelete='set null')
 	}
 nan_document_property()	
+
