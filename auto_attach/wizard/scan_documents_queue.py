@@ -15,11 +15,13 @@ view_form_start = """<?xml version="1.0"?>
 			<label align="0.0" string="Note that this operation may take a lot of time, depending on the amount of documents." colspan="4"/>
 			<label align="0.0" string="The following documents will be scanned:" colspan="4"/>
 			<field name="documents" nolabel="1" colspan="4"/>
+			<field name="background"/>
 		</group>
 	</form>"""
 
 view_fields_start = {
-	"documents": {'type':'text', 'string':'Documents', 'readonly':True}
+	"documents": {'type':'text', 'string':'Documents', 'readonly':True},
+	"background": {'type':'boolean', 'string':'Execute in the background' }
 }
 
 class ScanDocumentQueueWizard(wizard.interface):
@@ -31,8 +33,10 @@ class ScanDocumentQueueWizard(wizard.interface):
 		else:
 			ids = obj.search(cr, uid, [('state','=','pending')])
 		values = obj.read(cr, uid, ids, ['name'])
-		ret  = { 'documents': '\n'.join([x['name'] for x in values]) }
-		return ret
+		return {
+			'documents': '\n'.join([x['name'] for x in values]) ,
+			'background': True
+		}
 
 	def _scan(self, cr, uid, data, context):
 		pool = pooler.get_pool(cr.dbname)
@@ -41,7 +45,17 @@ class ScanDocumentQueueWizard(wizard.interface):
 			ids = data['ids']
 		else:
 			ids = obj.search(cr, uid, [('state','=','pending')])
-		obj.scan_document(cr, uid, ids)
+		if data['form']['background']:
+			pool.get('nan.document').write(cr, uid, ids, {'state': 'scanning'})
+			pool.get('ir.cron').create(cr, uid, {
+				'name': 'Scan documents in batch',
+				'user_id': uid,
+				'model': 'nan.document',
+				'function': 'scan_documents_batch',
+				'args': repr([ ids ])
+			})
+		else:
+			obj.scan_document(cr, uid, ids)
 		return {}
 
 	states = {

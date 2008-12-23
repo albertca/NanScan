@@ -158,6 +158,7 @@ class nan_document(osv.osv):
 		return ret
 
 	def scan_document_background(self, cr, uid, imageIds):
+		print "Scan document background"
 		self.pool.get('ir.cron').create(cr, uid, {
 			'name': 'Scan document',
 			'user_id': uid,
@@ -167,8 +168,18 @@ class nan_document(osv.osv):
 		})
 		cr.commit()
 
+	def scan_documents_batch(self, cr, uid, imageIds):
+		self.scan_document(cr, uid, imageIds)
+		self.pool.get('res.request').create( cr, uid, {
+			'act_from': uid,
+			'act_to': uid,
+			'name': 'Finished scanning documents',
+			'body': 'The auto_attach system has finished scanning the documents you requested. You can now go to the Scanned Documents queue to verify and process them.',
+		})
+
 	# If notify=True sends a request/notification to uid
 	def scan_document(self, cr, uid, imageIds, notify=False):
+		print "Scan_documentcalled"
 		# Load templates into 'templates' list
 		templates = self.pool.get('nan.template').getAllTemplates( cr, uid )
 
@@ -185,6 +196,7 @@ class nan_document(osv.osv):
 			fp.write( base64.decodestring(document.datas) )
 			fp.close()
 			recognizer.recognize( QImage( image ) )
+			
 			result = recognizer.findMatchingTemplateByOffset( templates )
 			template = result['template']
 			doc = result['document']
@@ -247,7 +259,7 @@ class nan_document(osv.osv):
 			fp.close()
 
 			recognizer = Recognizer()
-			recognizer.recognize()
+			recognizer.recognize( QImage( image ) )
 			doc = recognizer.extractWithTemplate( image, template )
 
 			for box in doc.boxes:
@@ -340,29 +352,6 @@ class nan_document(osv.osv):
 				self.write( cr, uid, [document.id], {'document': '%s,%s' % (reference[0],reference[1]) } )
 			else:
 				self.write( cr, uid, [document.id], {'document': False} )
-
-			#expression = re.match('(.*)\((.*)\)', function)
-			#name = expression.group(1)
-			#parameters = expression.group(2)
-			#if name not in dir(self):
-			#	print "Function '%s' not found" % (name)
-			#	continue
-			#parameters = parameters.split(',')
-			#properties = dict( [(x.name, x.value) for x in document.properties] )
-			#newParameters = []
-			#for p in parameters:
-			#	value = p.strip()
-			#	if value.startswith( '#' ):
-			#		print "We'll search '%s' in the properties" % value[1:]
-			#		if value[1:] not in properties:
-			#			continue
-			#		value = properties[ value[1:] ]
-			#	value = "'" + value.replace("'","\\\\'") + "'"
-			#	newParameters.append( value )
-
-			#obj = self.pool.get('nan.document')
-			#reference = eval('obj.%s(cr, uid, %s)' % ( name, ','.join( newParameters ) ) )
-
 
 
 	def actionAddPartner( self, cr, uid, explain, name ):
