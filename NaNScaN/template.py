@@ -35,7 +35,7 @@ class Template(QObject):
 		self.emit(SIGNAL('boxRemoved(PyQt_PyObject)'), box)
 
 class TemplateBox:
-	recognizers = ['text', 'barcode']
+	recognizers = ['text', 'barcode', 'dataMatrix']
 	types = ['matcher','input']
 	filters = ['none','numeric','alphabetic','alphanumeric']
 

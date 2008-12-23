@@ -1,3 +1,4 @@
+# coding=iso-8859-1
 #   Copyright (C) 2008 by Albert Cervera i Areny
 #   albert@nan-tic.com
 #
@@ -16,18 +17,41 @@
 #   Free Software Foundation, Inc.,
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 
-class Document:
+import subprocess
+import tempfile
+import codecs
+import os
+
+class Analyzer:
+	analyzers = {}
+
 	def __init__(self):
-		self.name = ''
-		self.template = None
 		self.boxes = []
-		self.formatedText = None
 
-	def addBox(self, box):
-		self.boxes.append( box )
+	@staticmethod
+	def registerAnalyzer(name, analyzer):
+		Analyzer.analyzers[name] = analyzer
 
-class DocumentBox:
-	def __init__(self):
-		self.text = '' 
-		self.templateBox = None
+	@staticmethod
+	def unregisterAnalyzer(name):
+		del Analyzer.analyzers[name]
 
+	@staticmethod
+	def create(name):
+		return Analyzer.analyzers[name]()
+
+	def scan(self, image):
+		pass
+
+	def textInRegion(self, region):
+		pass
+
+	def featureRectInRegion(self, region):
+		pass
+
+	# Spawn process and return STDOUT
+	def spawn(self, command, *args):
+		command = [ command ] + list( args )
+		process = subprocess.Popen( command , stdout=subprocess.PIPE )
+		content = process.communicate()[0]
+		return content

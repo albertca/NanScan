@@ -25,6 +25,7 @@ import shutil
 import math
 
 from temporaryfile import *
+from analyzer import *
 
 from gamera.core import *
 from PyQt4.QtCore import *
@@ -45,14 +46,25 @@ def boxComparison(x, y):
 
 ## @breif This class allows using an OCR and provides several convenient functions 
 # regarding text and image processing such as deskewing or obtaining formated text.
-class Ocr:
+class Ocr(Analyzer):
 	file = ""
 
 	## @brief Uses tesseract to recognize text of the current image.
-	def ocr(self):
+	def tesseract(self):
 		directory = tempfile.mkdtemp()
 		path = os.path.join( directory, 'tesseract' )
-		os.spawnlp(os.P_WAIT, 'tesseract', 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
+		self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
+		f=codecs.open(path + '.txt', 'r', 'utf-8')
+		content = f.read()
+		f.close()
+		shutil.rmtree(directory, True)
+		return content
+
+	## @brief Uses cuneiform to recognize text of the current image.
+	def cuneiform(self):
+		directory = tempfile.mkdtemp()
+		path = os.path.join( directory, 'cuneiform' )
+		os.spawnlpe(os.P_WAIT, '/home/albert/d/git/cuneiform/bin/cuneiform', '/home/albert/d/git/cuneiform/bin/cuneiform', self.file, path, '-l', 'spa', 'batch.nochop', {'LD_LIBRARY_PATH': '/home/albert/d/git/cuneiform/lib'} )
 		f=codecs.open(path + '.txt', 'r', 'utf-8')
 		content = f.read()
 		f.close()
@@ -130,7 +142,7 @@ class Ocr:
 		self.file = TemporaryFile.create('.tif') 
 		self.convertToGrayScale(image, self.file)
 
-		txt = lower( self.ocr() )
+		txt = lower( self.tesseract() )
 
 		self.boxes = self.parseTesseractOutput(txt)
 
@@ -315,6 +327,8 @@ class Ocr:
 			slope = self.slope( region )
 			if slope > 0.001:
 				self.deskewOnce( self, region )
+
+Analyzer.registerAnalyzer( 'text', Ocr )
 
 ## @brief Initializes OCR functions that need to be executed once before the library
 # can work. Currently only initiates Gamera which is not being used by now.

@@ -20,7 +20,9 @@
 from PyQt4.QtCore import *
 from barcode import *
 from ocr import *
+from datamatrix import *
 
+from analyzer import *
 from template import *
 from document import *
 from trigram import *
@@ -39,63 +41,64 @@ class Analyze(QThread):
 	def run(self):
 		self.analyzer.scan( self.image )
 
-
 class Recognizer(QObject):
 	def __init__(self, parent=None):
 		QObject.__init__(self, parent)
-		self.barcode = Barcode()
-		self.ocr = Ocr()
+		self.analyzers = {}
+		for x in Analyzer.analyzers:
+			self.analyzers[x] = Analyzer.create(x)
+		self.ocr = self.analyzers['text']
 		self.image = None
+		self.threads = []
 
 	## @brief Returns the text of a given region of the image. 
 	def textInRegion(self, region, type=None):
-		if type == 'barcode':
-			return self.barcode.textInRegion( region )
-		elif type == 'text':
-			return self.ocr.textInRegion( region )
+		if type in self.analyzers.keys():
+			return self.analyzers[type].textInRegion( region )
 		else:
 			return None
 
 	## @brief Returns the bounding rectangle of the text returned by textInRegion for
 	# the given region.
 	def featureRectInRegion(self, region, type=None):
-		if type == 'barcode':
-			return self.barcode.featureRectInRegion( region )
-		elif type == 'text':
-			return self.ocr.featureRectInRegion( region )
+		if type in self.analyzers:
+			return self.analyzers[type].featureRectInRegion( region )
 		else:
 			return None
 
 	def boxes(self, type):
-		if type == 'barcode':
-			return self.barcode.boxes
-		elif type == 'text':
-			return self.ocr.boxes
+		if type in self.analyzers:
+			return self.analyzers[type].boxes
 		else:
 			return None
 
 	def analyzersAvailable(self):
-		return ['barcode', 'text']
+		return self.analyzers.keys()
 		
 	# Synchronous
 	def recognize(self, image):
 		self.image = image
-		self.barcode.scan( image )
-		self.ocr.scan( image )
+		for analyzer in self.analyzers.values():
+			analyzer.scan( image )
+		#self.barcode.scan( image )
+		#self.ocr.scan( image )
 
 	## @brief Asynchronous: Starts analyzers in background threads. Emits finished() at the end
 	def startRecognition(self, image):
 		self.image = image
-		self.ocrThread = Analyze( self.ocr, image, self )
-		self.barcodeThread = Analyze( self.barcode, image, self )
-		self.connect( self.ocrThread, SIGNAL('finished()'), self.recognitionFinished )
-		self.connect( self.barcodeThread, SIGNAL('finished()'), self.recognitionFinished )
-		self.ocrThread.start()
-		self.barcodeThread.start()
+		self.threads = []
+		for analyzer in self.analyzers.values():
+			thread = Analyze( analyzer, image, self )
+			self.connect( thread, SIGNAL('finished()'), self.recognitionFinished )
+			self.threads.append( thread )
+			thread.start()
 		
 	def recognitionFinished(self):
-		if self.ocrThread.isFinished() and self.barcodeThread.isFinished():
-			self.emit( SIGNAL('finished()') )
+		for thread in self.threads:
+			if thread.isRunning():
+				return
+		self.emit( SIGNAL('finished()') )
+		self.threads = []
 
 	def filter(self, value, filterType):
 		numeric = '0123456789'
@@ -246,6 +249,7 @@ class Recognizer(QObject):
 			return QPoint( 0, 0 )
 
 		lines = self.ocr.textLinesWithSpaces()
+		print "FORMATED: ", self.ocr.formatedText().encode( 'ascii', 'replace' )
 
 		# Create a default translator only once
 		translator = Translator()
@@ -257,7 +261,7 @@ class Recognizer(QObject):
 				continue
 
 			templateBoxText = templateBox.text.strip()
-			templateBox.ranges = Range.extractAllRangesFromDocument(lines, len(templateBoxText))
+			templateBox.ranges = Range.extractAllRangesFromDocument( lines, len(templateBoxText), templateBox.featureRect.width() + 2 )
 			for ran in templateBox.ranges:
 				text = ran.text()
 				#value = Hamming.hamming( text, templateBoxText, translator )
@@ -402,7 +406,7 @@ class Range:
 	## @brief Returns a list with all possible ranges of size length of the 
 	# given document
 	@staticmethod
-	def extractAllRangesFromDocument(lines, length):
+	def extractAllRangesFromDocument(lines, length, width=0):
 		if length <= 0:
 			return []
 		ranges = []
@@ -413,6 +417,9 @@ class Range:
 				ran.pos = 0
 				ran.length = len(lines[line])
 				ran.document = lines
+				#if width:
+				#	while ran.rect().width() > width:
+				#		ran.length -= 1
 				ranges.append( ran )
 				continue
 			for pos in range(len(lines[line]) - length + 1):
@@ -421,6 +428,9 @@ class Range:
 				ran.pos = pos
 				ran.length = length
 				ran.document = lines
+				#if width:
+				#	while ran.rect().width() > width:
+				#		ran.length -= 1
 				ranges.append( ran )
 		return ranges
 

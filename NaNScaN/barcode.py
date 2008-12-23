@@ -23,6 +23,7 @@ from string import lower
 import os
 import tempfile
 from temporaryfile import *
+from analyzer import *
 
 class Box:
 	def __init__(self):
@@ -30,24 +31,9 @@ class Box:
 		self.type = None
 		self.position = None
 
-class Barcode:
+class Barcode(Analyzer):
 	def __init__(self):
 		self.boxes = []
-
-	# Spawn process and return STDOUT
-	def spawn(self, command, *args):
-		(fd,filename) = tempfile.mkstemp()
-		previousFd = os.dup(1)
-		os.dup2(fd, 1)
-		p = os.spawnlp(os.P_WAIT, command, command, *args)
-		os.dup2(previousFd, 1)
-		os.close(fd)
-		os.close(previousFd)
-		f = open( filename )
-		content = f.read()
-		f.close()
-		os.unlink( filename )
-		return content
 
 	def parseBardecodeOutput(self, content):
 		# Sample output "818043376500 [type: ean13 at: (1798,936)]"
@@ -101,3 +87,4 @@ class Barcode:
 		self.parseBardecodeOutput( content )
 		self.printBoxes()
 
+Analyzer.registerAnalyzer( 'barcode', Barcode )

@@ -183,6 +183,13 @@ class DocumentScene(QGraphicsScene):
 			circle.setBrush( self._circleItemBrush )
 			self._imageBoxes.addToGroup( circle )
 
+		for i in self.recognizer.boxes('dataMatrix'):
+			#rect = QGraphicsRectItem( i.box, self._imageBoxes )
+			rect = QGraphicsRectItem( self.mapRectFromRecognizer( i.box ), self._imageBoxes )
+			rect.setPen( self._boxItemPen )
+			rect.setBrush( self._boxItemBrush )
+			self._imageBoxes.addToGroup( rect )
+
 		self.setImageBoxesVisible( self._imageBoxesVisible )
 		self._imageBoxes.setZValue( 2 )
 
@@ -512,7 +519,7 @@ class MainWindow(QMainWindow):
 
 	def recognizerChanged(self, recognizer):
 		rect = self.uiTool.box.rect 
-		self.uiTool.setText( self.scene.recognizer.textInRegion( rect, recognizer ) )
+		self.uiTool.setText( self.scene.recognizer.textInRegion( rect, unicode(recognizer) ) )
 
 	def newTemplateBox(self, rect):
 		# Creating and adding the box to the template
@@ -644,7 +651,6 @@ class MainWindow(QMainWindow):
 			if not self.login():
 				return
 
-		print "DDDDD: ", Rpc.session
 		dialog = OpenTemplateDialog(self)
 		if dialog.exec_() == QDialog.Rejected:
 			return
