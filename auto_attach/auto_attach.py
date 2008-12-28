@@ -109,7 +109,7 @@ class nan_template_box(osv.osv):
 		'feature_height' : fields.float('Feature Height'),
 		'name' : fields.char('Name', 256),
 		'text' : fields.char('Text', 256),
-		'recognizer': fields.selection( [('text','Text'),('barcode','Barcode')], 'Recognizer' ),
+		'recognizer': fields.selection( [('text','Text'),('barcode','Barcode'),('dataMatrix','Data Matrix')], 'Recognizer' ),
 		'type' : fields.selection( [('matcher','Matcher'),('input','Input')], 'Type' ),
 		'filter' : fields.selection( [('numeric','Numeric'), ('alphabetic','Alphabetic'), ('alphanumeric','Alphanumeric'), ('exists', 'Exists'), ('none', 'None')], 'Filter' )
 	}
