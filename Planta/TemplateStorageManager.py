@@ -25,7 +25,7 @@
 #
 ##############################################################################
 
-from NaNScaN.template import *
+from NanScan.Template import *
 from Koo import Rpc
 from Koo.Model.Group import *
 

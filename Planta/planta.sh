@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Gamera, KTiny and NaNScaN
+# Koo and NanScan
 #export PYTHONPATH=/home/albert/python/lib/python:../../bin:../../..
-# NaNScaN
+# NanScan
 export PYTHONPATH=..:/home/albert/d/koo
 ./planta.py $1

@@ -28,7 +28,7 @@
 {
 	"name" : "Auto Attach",
 	"version" : "0.1",
-	"description" : "This module makes it possible to automatically attach scanned documents to any object using NaNScaN.",
+	"description" : "This module makes it possible to automatically attach scanned documents to any object using NanScan.",
 	"author" : "NaN",
 	"website" : "http://www.nan-tic.com",
 	"depends" : ["base"],

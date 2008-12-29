@@ -34,10 +34,10 @@ import shutil
 import codecs
 import re
 
-from NaNScaN.template import *
-from NaNScaN.document import *
-from NaNScaN.recognizer import *
-from NaNScaN.ocr import *
+from NanScan.Template import *
+from NanScan.Document import *
+from NanScan.Recognizer import *
+from NanScan.Ocr import *
 
 from PyQt4.QtCore import *
 

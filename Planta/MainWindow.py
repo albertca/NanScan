@@ -28,9 +28,9 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.uic import *
-from NaNScaN.template import *
-from NaNScaN.ocr import *
-from NaNScaN.recognizer import *
+from NanScan.Template import *
+from NanScan.Ocr import *
+from NanScan.Recognizer import *
 
 
 from TemplateStorageManager import *
