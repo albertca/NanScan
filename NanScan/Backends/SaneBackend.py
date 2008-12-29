@@ -21,7 +21,7 @@ from PyQt4.QtGui import *
 import sane
 # PIL Module to convert PIL Image Object to QImage
 import ImageQt
-import common
+import Common
 
 class SynchronousScanner(QObject):
 
@@ -50,7 +50,7 @@ class SynchronousScanner(QObject):
 		if not name:
 			devices = self.listDevices()
 			if not devices:
-				self.emit( SIGNAL('error(int)'), common.ScannerError.NoDeviceFound )
+				self.emit( SIGNAL('error(int)'), Common.ScannerError.NoDeviceFound )
 				return
 			name = devices[0]
 
@@ -60,7 +60,7 @@ class SynchronousScanner(QObject):
 			print "opened ", name
 		except:
 			print "error", name
-			self.emit( SIGNAL('error(int)'), common.ScannerError.CouldNotOpenDevice )
+			self.emit( SIGNAL('error(int)'), Common.ScannerError.CouldNotOpenDevice )
 			return
 			
 		source.mode = 'color'
@@ -84,11 +84,11 @@ class SynchronousScanner(QObject):
 				# the scanner
 				pass
 			except:
-				self.emit( SIGNAL('error(int)'), common.ScannerError.AcquisitionError )
+				self.emit( SIGNAL('error(int)'), Common.ScannerError.AcquisitionError )
 
 	# Member of SynchronousScanner Interface
 	def close(self):
 		pass
 				
 				
-common.ScannerBackend = SynchronousScanner
+Common.ScannerBackend = SynchronousScanner

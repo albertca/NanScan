@@ -1,8 +1,7 @@
 import twain, struct, string
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-#from common import *
-import common
+import Common
 
 class SynchronousScanner(QObject):
 
@@ -60,15 +59,15 @@ class SynchronousScanner(QObject):
 			l = self.listDevices()
 			if not l:
 				print "No device found"
-				return common.ScannerError.NoDeviceFound
+				return Common.ScannerError.NoDeviceFound
 			name = l[0]
 
 		try:
 			self.open(name)
 		except:
-			return common.ScannerError.CouldNotOpenDevice
+			return Common.ScannerError.CouldNotOpenDevice
 		if not self.source:
-			return common.ScannerError.CouldNotOpenDevice
+			return Common.ScannerError.CouldNotOpenDevice
 		
 		try:
 			self.source.SetCapability( twain.ICAP_YRESOLUTION, twain.TWTY_FIX32, float(self.resolution) )
@@ -85,12 +84,12 @@ class SynchronousScanner(QObject):
 		try:
 			self.source.RequestAcquire(0, 0)
 		except:
-			return common.ScannerError.AcquisitionError
+			return Common.ScannerError.AcquisitionError
 		
 		while self.next():
 			image = self.capture()
 			if not image:
-				return common.ScannerError.AcquisitionError
+				return Common.ScannerError.AcquisitionError
 			self.emit( SIGNAL('scanned(QImage)'), image )
 		self.source = None
 
@@ -119,4 +118,4 @@ class SynchronousScanner(QObject):
 	def close(self):
 		del self.manager
 
-common.ScannerBackend = SynchronousScanner
+Common.ScannerBackend = SynchronousScanner

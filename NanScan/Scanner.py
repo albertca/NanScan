@@ -16,10 +16,10 @@
 #   Free Software Foundation, Inc.,
 #   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. 
 import os
-from backends.common import *
+from Backends.Common import *
 
 if os.name == 'nt':
-	from backends.twain_backend import *
+	from Backends.TwainBackend import *
 else:
-	from backends.sane_backend import *
+	from Backends.SaneBackend import *
 
