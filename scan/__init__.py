@@ -37,7 +37,6 @@ def scan(datas):
 	s = ScanDialog()
         s.scan()
         s.exec_()
-	return True
 
 class RpcSaveThreaded(SaveThreaded):
 	def run(self):
