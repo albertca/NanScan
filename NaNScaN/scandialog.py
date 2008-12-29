@@ -174,9 +174,6 @@ class SaveThreaded(QThread):
 class FileSaveThreaded(SaveThreaded):
 	directory = unicode( QDir.tempPath() )
 
-	def __init__(self, parent=None):
-		SaveThreaded.__init__(self, parent)
-
 	def run(self):
 		self.error = True
 		d = QDir( FileSaveThreaded.directory )
