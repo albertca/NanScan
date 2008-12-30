@@ -184,7 +184,6 @@ class DocumentScene(QGraphicsScene):
 			self._imageBoxes.addToGroup( circle )
 
 		for i in self.recognizer.boxes('dataMatrix'):
-			#rect = QGraphicsRectItem( i.box, self._imageBoxes )
 			rect = QGraphicsRectItem( self.mapRectFromRecognizer( i.box ), self._imageBoxes )
 			rect.setPen( self._boxItemPen )
 			rect.setBrush( self._boxItemBrush )
