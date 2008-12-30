@@ -60,17 +60,6 @@ class Ocr(Analyzer):
 		shutil.rmtree(directory, True)
 		return content
 
-	## @brief Uses cuneiform to recognize text of the current image.
-	def cuneiform(self):
-		directory = tempfile.mkdtemp()
-		path = os.path.join( directory, 'cuneiform' )
-		os.spawnlpe(os.P_WAIT, '/home/albert/d/git/cuneiform/bin/cuneiform', '/home/albert/d/git/cuneiform/bin/cuneiform', self.file, path, '-l', 'spa', 'batch.nochop', {'LD_LIBRARY_PATH': '/home/albert/d/git/cuneiform/lib'} )
-		f=codecs.open(path + '.txt', 'r', 'utf-8')
-		content = f.read()
-		f.close()
-		shutil.rmtree(directory, True)
-		return content
-
 	## @brief Parses tesseract output creating a list of Character objects.
 	def parseTesseractOutput(self, input):
 		output = []
@@ -96,6 +85,48 @@ class Ocr(Analyzer):
 			y2 = float(y2) / self.dotsPerMillimeterY
 			height = float(height) / self.dotsPerMillimeterY
 			c.box = QRectF( x1, y2, width, height )
+			output.append( c )
+		return output
+
+	## @brief Uses cuneiform to recognize text of the current image.
+	def cuneiform(self):
+		directory = tempfile.mkdtemp()
+		path = os.path.join( directory, 'cuneiform.txt' )
+		os.spawnlpe(os.P_WAIT, '/home/albert/d/git/cuneiform/bin/cuneiform', '/home/albert/d/git/cuneiform/bin/cuneiform', '-l', 'spa', '-f', 'hocr', '-o', path, self.file, {'LD_LIBRARY_PATH': '/home/albert/d/git/cuneiform/lib'} )
+		f=codecs.open(path, 'r', 'utf-8', errors='ignore')
+		content = f.read()
+		f.close()
+		shutil.rmtree(directory, True)
+		return content
+
+	## @brief Parses tesseract output creating a list of Character objects.
+	def parseCuneiformOutput(self, input):
+		output = []
+		pos = input.find('\n')+1
+		input = input[pos:]
+		lines = input.partition('<span ')[2].split('bbox')
+		lines = lines[1:-1]
+		# Output example: <span title="bbox 391 595 400 621">l</span>
+		# Coordinates start at top left corner as we need.
+		for line in lines:
+			textBox = line.strip().split(' ')
+			x1 = int(textBox[0])
+			y1 = int(textBox[1])
+			x2 = int(textBox[2])
+			y2 = int(textBox[3].partition('"')[0])
+
+			width = x2 - x1
+			height = y2 - y1
+			
+			# Convert pixel coordinates into millimeters too.
+			x1 = float(x1) / self.dotsPerMillimeterX
+			width = float(width) / self.dotsPerMillimeterX
+			y1 = float(y1) / self.dotsPerMillimeterY
+			height = float(height) / self.dotsPerMillimeterY
+
+			c = Character()
+			c.character = textBox[3].partition('"')[2][1]
+			c.box = QRectF( x1, y1, width, height )
 			output.append( c )
 		return output
 
@@ -139,12 +170,18 @@ class Ocr(Analyzer):
 		self.dotsPerMillimeterX = float( self.image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
-		self.file = TemporaryFile.create('.tif') 
-		self.convertToGrayScale(image, self.file)
+		# Tesseract Steps
+		#self.file = TemporaryFile.create('.tif') 
+		#self.convertToGrayScale(image, self.file)
+		#txt = lower( self.tesseract() )
+		#self.boxes = self.parseTesseractOutput(txt)
 
-		txt = lower( self.tesseract() )
+		# Cuneiform Steps
+		self.file = TemporaryFile.create( '.png' )
+		image.save( self.file )
+		txt = lower( self.cuneiform() )
+		self.boxes = self.parseCuneiformOutput(txt)
 
-		self.boxes = self.parseTesseractOutput(txt)
 
 	## @brief Obtains top most box of the given list
 	def topMostBox(self, boxes):
@@ -275,8 +312,8 @@ class Ocr(Analyzer):
 	def formatedText(self, region=None):
 		lines = self.textLinesWithSpaces( region )
 		texts = []
-		text = u''
 		for line in lines:
+			text = u''
 			for c in line:
 				text += c.character
 			texts.append(text)
