@@ -27,7 +27,7 @@ from Template import *
 from Document import *
 from Trigram import *
 from Hamming import *
-from Levenshtein import *
+from LevenshteinDistance import *
 from Translator import *
 
 import tempfile
