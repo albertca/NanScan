@@ -31,6 +31,3 @@ property() functions (PyQt4 standard). The latter has a couple of problems: the 
 to create both functions for each property and that if we want to embed a widget in
 QtDesigner properties should be set in Python style.
 
-- Add simple scanning dialog, with the possibility of storing the image in a file, 
-server, etc.
-
