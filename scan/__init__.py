@@ -32,6 +32,7 @@ from NanScan.ScanDialog import *
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.uic import *
+from Koo.Plugins import Plugins
 
 def scan(datas):
 	s = ScanDialog()
@@ -58,3 +59,4 @@ class RpcSaveThreaded(SaveThreaded):
 		if id:
 			self.error = False
 
+Plugins.register( 'scanner', 'nan.document', _('Scan Documents'), scan )
