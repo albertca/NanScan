@@ -454,6 +454,7 @@ class MainWindow(QMainWindow):
 		self.connect( self.actionUnzoom, SIGNAL('triggered()'), self.unzoom )
 		self.connect( self.actionFindMatchingTemplateByOffset, SIGNAL('triggered()'), self.findMatchingTemplateByOffset )
 		self.connect( self.actionFindMatchingTemplateByText, SIGNAL('triggered()'), self.findMatchingTemplateByText )
+		self.connect( self.actionRecognizeInvoice, SIGNAL('triggered()'), self.recognizeInvoice )
 		self.toggleImageBoxes()
 		QTimer.singleShot( 1000, self.setup )
 		self.updateTitle()
@@ -485,6 +486,12 @@ class MainWindow(QMainWindow):
 
 	def findMatchingTemplateByText(self):
 		self.findMatchingTemplate( 'text' )
+
+	def recognizeInvoice(self):
+		from NanScan.Generics.InvoiceRecognizer import InvoiceRecognizer
+		p = InvoiceRecognizer()
+		result = p.recognize( self.recognizer )
+		QMessageBox.information( self, _('Invoice Recognition'), result )
 
 	def findMatchingTemplate(self, type):
 		if type == 'offset':

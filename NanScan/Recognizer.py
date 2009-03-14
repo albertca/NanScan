@@ -29,6 +29,7 @@ from Trigram import *
 from Hamming import *
 from LevenshteinDistance import *
 from Translator import *
+from Range import *
 
 import tempfile
 
@@ -70,7 +71,7 @@ class Recognizer(QObject):
 		if type in self.analyzers:
 			return self.analyzers[type].boxes
 		else:
-			return None
+			return []
 
 	def analyzersAvailable(self):
 		return self.analyzers.keys()
@@ -148,11 +149,9 @@ class Recognizer(QObject):
 	# 5 (the default) will make the template move 5 millimeter to the right,
 	# 5 to the left, 5 to the top and 5 to the bottom. This means 121 positions
 	# per template.
+	#
 	# Note that the image must have been scanned (using scan() or startScan()) 
 	# before using this function.
-	#
-	# TODO: Using offsets to find the best template is easy but highly inefficient.
-	#  a smarter solution should be implemented.
 	def findMatchingTemplateByOffset( self, templates, offset = 5 ):
 		max = 0
 		best = {
@@ -200,9 +199,6 @@ class Recognizer(QObject):
 	#
 	# Note that the image must have been scanned (using scan() or startScan()) 
 	# before using this function.
-	#
-	# TODO: Using offsets to find the best template is easy but highly inefficient.
-	#  a smarter solution should be implemented.
 	def findMatchingTemplateByText( self, templates ):
 		max = 0
 		best = {
@@ -224,7 +220,6 @@ class Recognizer(QObject):
 			# Apply template with offset found
 			currentDocument = self.extractWithTemplate( template, offset.x(), offset.y() )
 			for documentBox in currentDocument.boxes:
-				print "Applying..."
 				if documentBox.templateBox.type != 'matcher':
 					continue
 				templateBox = documentBox.templateBox
@@ -372,66 +367,4 @@ class TemplateBoxRangeIterator:
 					self.loopPos[x] += 1
 					break
 		return result
-
-def rangeDistanceComparison(x, y):
-	if x.distance > y.distance:
-		return 1
-	elif x.distance < y.distance:
-		return -1
-	else:
-		return 0
-
-## @brief This class represents a group of characters in a document.
-class Range:
-	def __init__(self):
-		self.line = 0
-		self.pos = 0
-		self.length = 0
-		self.document = None
-
-	## @brief Returns a unicode string with the text of the current range
-	def text(self):
-		line = self.document[self.line]
-		chars = line[self.pos:self.pos + self.length]
-		return u''.join( [x.character for x in chars] )
-
-	## @brief Returns the bounding rectangle of the text in the range
-	def rect(self):
-		line = self.document[self.line]
-		chars = line[self.pos:self.pos + self.length]
-		rect = QRectF()
-		for c in chars:
-			rect = rect.united( c.box )
-		return rect
-
-	## @brief Returns a list with all possible ranges of size length of the 
-	# given document
-	@staticmethod
-	def extractAllRangesFromDocument(lines, length, width=0):
-		if length <= 0:
-			return []
-		ranges = []
-		for line in range(len(lines)):
-			if length >= len(lines[line]):
-				ran = Range()
-				ran.line = line
-				ran.pos = 0
-				ran.length = len(lines[line])
-				ran.document = lines
-				#if width:
-				#	while ran.rect().width() > width:
-				#		ran.length -= 1
-				ranges.append( ran )
-				continue
-			for pos in range(len(lines[line]) - length + 1):
-				ran = Range()
-				ran.line = line
-				ran.pos = pos
-				ran.length = length
-				ran.document = lines
-				#if width:
-				#	while ran.rect().width() > width:
-				#		ran.length -= 1
-				ranges.append( ran )
-		return ranges
 

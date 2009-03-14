@@ -1,5 +1,5 @@
 from PyQt4.QtGui import *
-from scandialog import *
+from ScanDialog import *
 import sys
 import os
 
@@ -10,7 +10,7 @@ dialog = ScanDialog()
 if os.name == 'nt':
 	FileSaveThreaded.directory = 'c:\\images'
 else:
-	FileSaveThreaded.directory = '/tmp'
+	FileSaveThreaded.directory = '/tmp/scan'
 
 dialog.exec_()
 

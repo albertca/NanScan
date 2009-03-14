@@ -44,7 +44,7 @@ def boxComparison(x, y):
 	else:
 		return 0
 
-## @breif This class allows using an OCR and provides several convenient functions 
+## @brief This class allows using an OCR and provides several convenient functions 
 # regarding text and image processing such as deskewing or obtaining formated text.
 class Ocr(Analyzer):
 	file = ""
@@ -132,12 +132,12 @@ class Ocr(Analyzer):
 
 	## @brief Returns the text of a given region of the image. 
 	# It's the same as calling formatedText().
-	def textInRegion(self, region):
+	def textInRegion(self, region=None):
 		return self.formatedText( region )
 
 	## @brief Returns the bounding rectangle of the text returned by textInRegion for
 	# the given region.
-	def featureRectInRegion(self, region):
+	def featureRectInRegion(self, region=None):
 		lines = self.textLinesWithSpaces( region )
 		rect = QRectF()
 		for line in lines:
@@ -242,6 +242,58 @@ class Ocr(Analyzer):
 			line.sort( boxComparison )
 		return lines
 
+	## @brief This function adds spaces between words of a single line of boxes.
+	def textLineWithSpaces(self, line):
+		width = 0
+		count = 0
+		left = None
+		spacesToAdd = []
+		words = []
+		for c in line:
+			if left:
+				# If separtion between previous and current char
+				# is greater than a third of the average character
+				# width we'll add a space.
+				if c.box.left() - left > ( width / count ) / 3:
+					if spacesToAdd:
+						words.append( line[spacesToAdd[-1]:count] )
+					spacesToAdd.append( count )
+
+			# c.character is already a unicode string
+			left = c.box.right()
+			width += c.box.width()
+			count += 1
+
+		# Try to find out if they are fixed sized characters
+		# We've got some problems with fixed size fonts. In some cases the 'I' letter will
+		# have the width of a pipe but the distance between characters will be fixed. In these
+		# cases it's very probable our algorithm will add incorrect spaces before and/or after
+		# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
+		# font. The commented code below tries to do just that by calculating distances within
+		# the letters of each word. We need to find out if something like this can work and 
+		# use it.
+		#for x in words:
+			#dist = []
+			#for c in range( len(x)-1 ):
+				#dist.append( x[c+1].box.center().x() - x[c].box.center().x() )
+			#print 'Paraula: ', (u''.join( [i.character for i in x] )).encode( 'ascii', 'ignore')
+			#print 'Distancies: ', dist
+				
+			
+		# Reverse so indexes are still valid after insertions
+		spacesToAdd.reverse()
+		previousIdx = None
+		for idx in spacesToAdd:
+			c = Character()
+			c.character = u' '
+			c.box = QRectF()
+			c.box.setTop( line[idx - 1].box.top() )
+			c.box.setBottom( line[idx - 1].box.bottom() )
+			c.box.setLeft( line[idx - 1].box.right() )
+			c.box.setRight( line[idx].box.left() )
+			line.insert( idx, c )
+
+
 	## @brief This function is similar to textLines() but adds spaces between words.
 	# The result is also a list of lines each line being a list of Character objects.
 	def textLinesWithSpaces(self, region=None):
@@ -257,54 +309,7 @@ class Ocr(Analyzer):
 		# which is quite usual.
 
 		for line in lines:
-			width = 0
-			count = 0
-			left = None
-			spacesToAdd = []
-			words = []
-			for c in line:
-				if left:
-					# If separtion between previous and current char
-					# is greater than a third of the average character
-					# width we'll add a space.
-					if c.box.left() - left > ( width / count ) / 3:
-						if spacesToAdd:
-							words.append( line[spacesToAdd[-1]:count] )
-						spacesToAdd.append( count )
-
-				# c.character is already a unicode string
-				left = c.box.right()
-				width += c.box.width()
-				count += 1
-
-			# Try to find out if they are fixed sized characters
-			# We've got some problems with fixed size fonts. In some cases the 'I' letter will
-			# have the width of a pipe but the distance between characters will be fixed. In these
-			# cases it's very probable our algorithm will add incorrect spaces before and/or after
-			# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
-			# font. The commented code below tries to do just that by calculating distances within
-			# the letters of each word. We need to find out if something like this can work and 
-			# use it.
-			#for x in words:
-				#dist = []
-				#for c in range( len(x)-1 ):
-					#dist.append( x[c+1].box.center().x() - x[c].box.center().x() )
-				#print 'Paraula: ', (u''.join( [i.character for i in x] )).encode( 'ascii', 'ignore')
-				#print 'Distancies: ', dist
-					
-				
-			# Reverse so indexes are still valid after insertions
-			spacesToAdd.reverse()
-			previousIdx = None
-			for idx in spacesToAdd:
-				c = Character()
-				c.character = u' '
-				c.box = QRectF()
-				c.box.setTop( line[idx - 1].box.top() )
-				c.box.setBottom( line[idx - 1].box.bottom() )
-				c.box.setLeft( line[idx - 1].box.right() )
-				c.box.setRight( line[idx].box.left() )
-				line.insert( idx, c )
+			self.textLineWithSpaces( line )
 		return lines
 
 		
