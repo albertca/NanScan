@@ -43,10 +43,10 @@ class Analyzer:
 	def scan(self, image):
 		pass
 
-	def textInRegion(self, region):
+	def textInRegion(self, region=None):
 		pass
 
-	def featureRectInRegion(self, region):
+	def featureRectInRegion(self, region=None):
 		pass
 
 	# Spawn process and return STDOUT

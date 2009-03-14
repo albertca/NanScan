@@ -54,19 +54,19 @@ class Barcode(Analyzer):
 			print "Text: %s, Type: %s, Position: %f, %f" % (x.text, x.type, x.position.x(), x.position.y())
 		
 	## @brief Returns all barcode values concatenated for a given region of the image. 
-	def textInRegion(self, region):
+	def textInRegion(self, region=None):
 		for x in self.boxes:
-			if region.contains(x.position):
+			if not region or region.contains(x.position):
 				return unicode(x.text)
 		# Always return unicode strings
 		return u''
 
 	## @brief Returns the bounding rectangle of the text returned by textInRegion for
 	# the given region.
-	def featureRectInRegion(self, region):
+	def featureRectInRegion(self, region=None):
 		rect = QRectF()
 		for x in self.boxes:
-			if region.contains(x.position):
+			if not region or region.contains(x.position):
 				rect = rect.united( QRectF( x.position, x.position ) )
 		return rect
 

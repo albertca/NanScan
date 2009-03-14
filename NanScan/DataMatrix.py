@@ -103,10 +103,10 @@ class DataMatrix(Analyzer):
 			print "Text: '%s';  Position: %f, %f;  Size: %f, %f;" % (x.text, x.box.x(), x.box.y(), x.box.width(), x.box.height() )
 		
 	## @brief Returns all data matrix values concatenated for a given region of the image. 
-	def textInRegion(self, region):
+	def textInRegion(self, region=None):
 		texts = []
 		for x in self.boxes:
-			if region.intersects(x.box):
+			if not region or region.intersects(x.box):
 				texts.append( unicode(x.text) )
 
 		# Always return unicode strings
@@ -114,10 +114,10 @@ class DataMatrix(Analyzer):
 
 	## @brief Returns the bounding rectangle of the text returned by textInRegion for
 	# the given region.
-	def featureRectInRegion(self, region):
+	def featureRectInRegion(self, region=None):
 		rect = QRectF()
 		for x in self.boxes:
-			if region.intersects(x.box):
+			if not region or region.intersects(x.box):
 				rect = rect.united( x.box )
 		return rect
 
@@ -138,7 +138,7 @@ class DataMatrix(Analyzer):
 		self.parseOutput( content )
 		self.printBoxes()
 
-Analyzer.registerAnalyzer( 'dataMatrix', DataMatrix )
+#Analyzer.registerAnalyzer( 'dataMatrix', DataMatrix )
 
 if __name__ == '__main__':
 	d = DataMatrix()
