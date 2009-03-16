@@ -132,7 +132,9 @@ class DataMatrix(Analyzer):
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
 		file = TemporaryFile.create()
-		image.save( file, 'PNG' )
+		# Use BMP format instead of PNG, for performance reasons. 
+		# BMP takes about 0.5 seconds whereas PNG takes 13.
+		image.save( file, 'BMP' )
 		command = 'dmtxread'
 		content = self.spawn( command, '-n', '-v', file )
 		self.parseOutput( content )

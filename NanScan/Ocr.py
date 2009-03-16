@@ -167,7 +167,9 @@ class Ocr(Analyzer):
 		#self.boxes = self.parseTesseractOutput(txt)
 
 		# Cuneiform Steps
-		self.file = TemporaryFile.create( '.png' )
+		# Use BMP format instead of PNG, for performance reasons. 
+		# BMP takes about 0.5 seconds whereas PNG takes 13.
+		self.file = TemporaryFile.create( '.bmp' )
 		image.save( self.file )
 		txt = lower( self.cuneiform() )
 		self.boxes = self.parseCuneiformOutput(txt)

@@ -81,7 +81,9 @@ class Barcode(Analyzer):
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
 		file = TemporaryFile.create()
-		image.save( file, 'PNG' )
+		# Use BMP format instead of PNG, for performance reasons. 
+		# BMP takes about 0.5 seconds whereas PNG takes 13.
+		image.save( file, 'BMP' )
 		command = '/home/albert/d/git/exact-image-0.5.0/objdir/frontends/bardecode'
 		content = self.spawn( command, file )
 		self.parseBardecodeOutput( content )
