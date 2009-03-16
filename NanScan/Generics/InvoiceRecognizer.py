@@ -19,6 +19,7 @@
 
 from NanScan.LevenshteinDistance import *
 from NanScan.Range import *
+from NanScan.Block import *
 from NanScan.TextPatterns import *
 
 class InvoiceRecognizer:
@@ -64,10 +65,35 @@ class InvoiceRecognizer:
 	def recognize(self, recognizer):
 		#text = recognizer.textInRegion('text')
 		analyzer = recognizer.analyzers['text']
-		self.textLines = analyzer.textLinesWithSpaces()
+		self.textLines = analyzer.block.textLinesWithSpaces()
 		result = ''
 		for tag in InvoiceRecognizer.Tags:
 			result += 'Tag: %s, Value: %s\n' % ( tag, self.findTagValue( tag ) )
+
+		print "========================================"
+		blocks = Block.extractAllBlocksFromDocument( self.textLines )
+		for block in blocks:
+			print "---"
+			print "BLOCK:", block.text().encode('ascii','ignore')
+			print "---"
+		print "========================================"
+		# Try to find out which of the blocks contains customer information
+
+		# This rect, picks up the first third of an A4 paper size.
+		top = QRectF( 0, 0, 210, 99 )
+		tops = []
+		for block in blocks:
+			if block.rect().intersects( top ):
+				tops.append( block )
+		# Once we have all the blocks of the first third of the paper
+		# try to guess which of them is the good one.
+
+		# Remove those blocks too wide
+		sized = []
+		for block in tops:
+			if block.width() < 120:
+				sized.append( block )
+
 		return result
 
         def formatedLine(self, line):

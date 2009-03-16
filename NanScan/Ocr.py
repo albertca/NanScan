@@ -26,23 +26,13 @@ import math
 
 from TemporaryFile import *
 from Analyzer import *
+from Block import *
 
 from gamera.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-class Character:
-	def __init__(self):
-		self.character = None
-		self.box = None
 
-def boxComparison(x, y):
-	if x.box.x() > y.box.x():
-		return 1
-	elif x.box.x() < y.box.x():
-		return -1
-	else:
-		return 0
 
 ## @brief This class allows using an OCR and provides several convenient functions 
 # regarding text and image processing such as deskewing or obtaining formated text.
@@ -133,12 +123,12 @@ class Ocr(Analyzer):
 	## @brief Returns the text of a given region of the image. 
 	# It's the same as calling formatedText().
 	def textInRegion(self, region=None):
-		return self.formatedText( region )
+		return self.block.formatedText( region )
 
 	## @brief Returns the bounding rectangle of the text returned by textInRegion for
 	# the given region.
 	def featureRectInRegion(self, region=None):
-		lines = self.textLinesWithSpaces( region )
+		lines = self.block.textLinesWithSpaces( region )
 		rect = QRectF()
 		for line in lines:
 			for c in line:
@@ -182,147 +172,10 @@ class Ocr(Analyzer):
 		txt = lower( self.cuneiform() )
 		self.boxes = self.parseCuneiformOutput(txt)
 
-
-	## @brief Obtains top most box of the given list
-	def topMostBox(self, boxes):
-		top = None
-		for x in boxes:
-			if not top or x.box.y() < top.box.y():
-				top = x
-		return top
-
-	## @brief Obtain text lines in a list of lines where each line is a list
-	# of ordered characters.
-	# Note that no spaces are added in this function and each character is a 
-	# Character class instance.
-	# The algorithm used is pretty simple:
-	#   1- Put all boxes in a list ('boxes')
-	#   2- Search top most box, remove from pending 'boxes' and add in a new line
-	#   3- Search all boxes that vertically intersect with current box, remove from
-	#       pending and add in the current line
-	#   4- Go to number 2 until all boxes have been processed.
-	#   5- Sort the characters of each line by the y coordinate.
-	def textLines(self, region=None):
-		# If we use 'if region:' instead of comparing with None
-		# rects with top (or left) >= bottom (or right), will return 
-		# False and thus return _all_ boxes instead of _none_.
-		# Indeed, 'if region:' is equivalent to 'if region.isValid():'
-		if region != None:
-			# Filter out boxes not in the given region
-			boxes = []
-			for x in self.boxes:
-				if region.intersects(x.box):
-					boxes.append(x)
-		else:
-			# Copy as we'll remove items from the list
-			boxes = self.boxes[:]
-
-		lines = []
-		while boxes:
-			box = self.topMostBox( boxes )
-			boxes.remove( box )
-			line = []
-			line.append( box )
-			toRemove = []
-			for x in boxes:
-				if x.box.top() > box.box.bottom():
-					continue
-				elif x.box.bottom() < box.box.top():
-					continue
-				line.append( x )
-				toRemove.append( x )
-
-			for x in toRemove:
-				boxes.remove( x )
-			lines.append( line )
-
-		# Now that we have all boxes in its line. Sort each of
-		# them
-		for line in lines:
-			line.sort( boxComparison )
-		return lines
-
-	## @brief This function adds spaces between words of a single line of boxes.
-	def textLineWithSpaces(self, line):
-		width = 0
-		count = 0
-		left = None
-		spacesToAdd = []
-		words = []
-		for c in line:
-			if left:
-				# If separtion between previous and current char
-				# is greater than a third of the average character
-				# width we'll add a space.
-				if c.box.left() - left > ( width / count ) / 3:
-					if spacesToAdd:
-						words.append( line[spacesToAdd[-1]:count] )
-					spacesToAdd.append( count )
-
-			# c.character is already a unicode string
-			left = c.box.right()
-			width += c.box.width()
-			count += 1
-
-		# Try to find out if they are fixed sized characters
-		# We've got some problems with fixed size fonts. In some cases the 'I' letter will
-		# have the width of a pipe but the distance between characters will be fixed. In these
-		# cases it's very probable our algorithm will add incorrect spaces before and/or after
-		# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
-		# font. The commented code below tries to do just that by calculating distances within
-		# the letters of each word. We need to find out if something like this can work and 
-		# use it.
-		#for x in words:
-			#dist = []
-			#for c in range( len(x)-1 ):
-				#dist.append( x[c+1].box.center().x() - x[c].box.center().x() )
-			#print 'Paraula: ', (u''.join( [i.character for i in x] )).encode( 'ascii', 'ignore')
-			#print 'Distancies: ', dist
-				
-			
-		# Reverse so indexes are still valid after insertions
-		spacesToAdd.reverse()
-		previousIdx = None
-		for idx in spacesToAdd:
-			c = Character()
-			c.character = u' '
-			c.box = QRectF()
-			c.box.setTop( line[idx - 1].box.top() )
-			c.box.setBottom( line[idx - 1].box.bottom() )
-			c.box.setLeft( line[idx - 1].box.right() )
-			c.box.setRight( line[idx].box.left() )
-			line.insert( idx, c )
+		self.block = Block()
+		self.block.setBoxes( self.boxes )
 
 
-	## @brief This function is similar to textLines() but adds spaces between words.
-	# The result is also a list of lines each line being a list of Character objects.
-	def textLinesWithSpaces(self, region=None):
-
-		lines = self.textLines( region )
-
-		# Now we have all lines with their characters in their positions.
-		# Here we write and add spaces appropiately. 
-		# In order not to be distracted with character widths of letters
-		# like 'm' or 'i' (which are very wide and narrow), we average
-		# width of the letters on a per line basis. This shows good 
-		# results, by now, on text with the same char size in the line,
-		# which is quite usual.
-
-		for line in lines:
-			self.textLineWithSpaces( line )
-		return lines
-
-		
-	## @brief Returns the text in the given region as a string. Spaces included.
-	def formatedText(self, region=None):
-		lines = self.textLinesWithSpaces( region )
-		texts = []
-		for line in lines:
-			text = u''
-			for c in line:
-				text += c.character
-			texts.append(text)
-		return u'\n'.join( texts )
 
 	## @brief Calculates slope of text lines
 	# This value is used by deskew() function to rotate image and
@@ -338,7 +191,7 @@ class Ocr(Analyzer):
 	def slope(self, region=None):
 		# TODO: We should probably discard values that highly differ
 		# from the average for the final value to be used to rotate.
-		lines = self.textLines( region )
+		lines = self.block.textLines( region )
 		slopes = []
 		for line in lines:
 			if len(line) < 3:
