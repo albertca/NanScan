@@ -54,6 +54,8 @@ class Character:
 
 ## @brief This class represents a group of characters in a document.
 class Block:
+	slimCharacters = 'iIl1.,; '
+
 	def __init__(self):
 		self.document = None
 		self._boxes = []
@@ -232,46 +234,131 @@ class Block:
 			line.sort( boxComparison )
 		return lines
 
+	def meanCharacterWidth(self, line):
+		# Calculate mean char width
+		width = 0.0
+		for c in line:
+			if not c.character in Block.slimCharacters:
+				width += c.box.width()
+		width = width / len(line)
+		return width
+
+	def distancesBetweenCharacterCenters(self, line):
+		width = self.meanCharacterWidth(line)
+		previousCenter = None
+		previousRight = None
+		distance = 0.0
+		distances = []
+		for c in line:
+			if previousCenter and not ignorePrevious:
+				# If separation is bigger than mean char width
+				# we can consider "for sure" it's another word.
+				if c.box.x() - previousRight < width and ( not c.character in Block.slimCharacters ):
+					distances.append( c.box.center().x() - previousCenter )
+					distance += distances[-1]
+			previousCenter = c.box.center().x()
+			previousRight = c.box.right()
+			if c.character in Block.slimCharacters:
+				ignorePrevious = True
+			else:
+				ignorePrevious = False
+
+		if not distance:
+			return None
+		#return distance / len(distances)
+		return (distance, distances)
+
+
+	def meanDistanceBetweenCharacterCenters(self, line):
+		d = self.distancesBetweenCharacterCenters(line)
+		if not d:
+			return None
+		return d[0] / len( d[1] )
+
+	def deviationDistanceBetweenCharacterCenters(self, line):
+		d = self.distancesBetweenCharacterCenters(line)
+		if not d:
+			return None
+		distances = d[1]
+		mean = d[0] / len( distances )
+		m = 0.0
+		for x in distances:
+			m += abs( x - mean )
+		m = ( m / len(distances) ) / mean 
+		return m
+
+	def isFixedPitchFont(self, line):
+		if len(line) == 0:
+			return False
+
+		m = self.deviationDistanceBetweenCharacterCenters(line)
+		if not m:
+			return False
+		if m < 0.1:
+			return True
+		else:
+			return False
+
+
 	## @brief This function adds spaces between words of a single line of boxes.
 	def textLineWithSpaces(self, line):
 		width = 0
 		count = 0
 		left = None
-		spacesToAdd = []
 		words = []
+		blocks = []
+		averageWidth = []
+		# First let's try to find average char width
 		for c in line:
 			if left:
-				# WITH TESSERACT: 1 * 0.333
-				# If separtion between previous and current char
-				# is greater than a third of the average character
-				# width we'll add a space.
-				#
-				# WITH CUNEIFORM: 1 * 0.4
-				if c.box.left() - left > ( width / count ) * 0.4:
-					if spacesToAdd:
-						words.append( line[spacesToAdd[-1]:count] )
-					spacesToAdd.append( count )
-
+				if c.box.left() - left > ( width / count ) * 2:
+					blocks.append( count )
+					averageWidth.append( width / count )
 			left = c.box.right()
 			width += c.box.width()
 			count += 1
+		blocks.append( count )
+		averageWidth.append( width / count )
 
-		# Try to find out if they are fixed sized characters
-		# We've got some problems with fixed size fonts. In some cases the 'I' letter will
-		# have the width of a pipe but the distance between characters will be fixed. In these
-		# cases it's very probable our algorithm will add incorrect spaces before and/or after
-		# the 'I' letter. This should be fixed by somehow determining if it's a fixed sized
-		# font. The commented code below tries to do just that by calculating distances within
-		# the letters of each word. We need to find out if something like this can work and 
-		# use it.
-		#for x in words:
-			#dist = []
-			#for c in range( len(x)-1 ):
-				#dist.append( x[c+1].box.center().x() - x[c].box.center().x() )
-			#print 'Paraula: ', (u''.join( [i.character for i in x] )).encode( 'ascii', 'ignore')
-			#print 'Distancies: ', dist
-				
-			
+		# TODO: Calculate fixedPitch in a per block basis, just like average char width
+		fixedPitch = self.isFixedPitchFont( line )
+		meanDistance = self.meanDistanceBetweenCharacterCenters( line )
+
+		width = 0
+		count = 0
+		left = None
+		center = None
+		spacesToAdd = []
+		words = []
+		currentBlock = 0
+		for c in line:
+			if count > blocks[currentBlock]:
+				currentBlock += 1
+			if left:
+				# We act differently if font is has fixedPitch or not.
+				if fixedPitch:
+					if c.box.center().x() - center > meanDistance * 1.15:
+						if spacesToAdd:
+							words.append( line[spacesToAdd[-1]:count] )
+						spacesToAdd.append( count )
+				else:
+					# WITH TESSERACT: 1 * 0.333
+					# If separtion between previous and current char
+					# is greater than a third of the average character
+					# width we'll add a space.
+					#
+					# WITH CUNEIFORM: 1 * 0.4
+					#if c.box.left() - left > ( width / count ) * 0.4:
+					if c.box.left() - left > averageWidth[currentBlock] * 0.4:
+						if spacesToAdd:
+							words.append( line[spacesToAdd[-1]:count] )
+						spacesToAdd.append( count )
+
+			left = c.box.right()
+			center = c.box.center().x()
+			width += c.box.width()
+			count += 1
+
 		# Reverse so indexes are still valid after insertions
 		spacesToAdd.reverse()
 		previousIdx = None
