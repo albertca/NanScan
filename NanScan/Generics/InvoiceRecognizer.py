@@ -189,8 +189,6 @@ class InvoiceRecognizer:
 	def findTagValueFromRange(self, tag, ran):
 
 		# Extract text on the right
-		#line = self.formatedLine( self.textLines[ ran.line ] )
-		#rightValue = line[ran.pos+ran.length+1:].strip().split(' ')[0]
 		line = self.textLines[ ran.line ]
 		line = line[ran.pos+ran.length+1:]
 		rightValue = Block.extractAllBlocksFromDocument( [ line ] )[0].text()
