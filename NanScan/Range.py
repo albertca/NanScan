@@ -37,6 +37,24 @@ def rangeLengthComparison(x, y):
 	else:
 		return 0
 
+def rangeDistanceLengthRatioComparison(x, y):
+	xt = x.text()
+	if len( xt ):
+		xl = (1.0/len(xt)) + float( x.distance ) / len( xt ) 
+	else:
+		xl = 999
+	yt = y.text()
+	if len( y.text() ):
+		yl = (1.0/len(yt)) + float( y.distance ) / len( yt )
+	else:
+		yl = 999
+	if xl > yl:
+		return 1
+	elif xl < yl:
+		return -1
+	else:
+		return 0
+
 ## @brief This class represents a group of characters in a document.
 class Range:
 	def __init__(self):

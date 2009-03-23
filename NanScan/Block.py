@@ -58,15 +58,23 @@ class Block:
 		self.document = None
 		self._boxes = []
 		self.outerDistance = 2.5
+		self._rect = None
+		self._outerRect = None
 	
 	def setBoxes(self, boxes):
 		self._boxes = boxes
+		self.invalidateCache()
 
 	def boxes(self):
 		return self._boxes
 
 	def addBox(self, box):
 		self._boxes.append( box )
+		self.invalidateCache()
+
+	def removeBox(self, box):
+		self._boxes.remove( box )
+		self.invalidateCache()
 
 	def count(self):
 		return len(self._boxes)
@@ -75,20 +83,30 @@ class Block:
 	def text(self):
 		return self.formatedText()
 
+	def invalidateCache(self):
+		self._rect = None
+		self._outerRect = None
+
 	## @brief Returns the bounding rectangle of the text in the range
 	def rect(self):
-		rect = QRectF()
+		# If we have the value in the cache use it.
+		if self._rect:
+			return self._rect
+		self._rect = QRectF()
 		for c in self._boxes:
-			rect = rect.united( c.box )
-		return rect
+			self._rect = self._rect.united( c.box )
+		return self._rect
 
 	## @brief Returns a bounding rectangle of the text in the block that is 'outerDistance'
 	# larger in all sides.
 	def outerRect(self):
+		if self._outerRect:
+			return self._outerRect
 		rect = self.rect()
 		rect.translate( - self.outerDistance, - self.outerDistance )
 		rect.setWidth( rect.width() + self.outerDistance * 2.0 )
 		rect.setHeight( rect.height() + self.outerDistance * 2.0 )
+		self._outerRect = rect
 		return rect
 
 	## @brief Returns a list with all possible ranges of size length of the 
@@ -117,7 +135,7 @@ class Block:
 			block.document = lines
 			blocks.append( block )
 			for char in line:
-				if char.character != u' ':
+				if char.character != u' ' or block.count() == 0:
 					block.addBox( char )
 				else:
 					avgWidth = block.rect().width() / block.count()
@@ -234,7 +252,6 @@ class Block:
 						words.append( line[spacesToAdd[-1]:count] )
 					spacesToAdd.append( count )
 
-			# c.character is already a unicode string
 			left = c.box.right()
 			width += c.box.width()
 			count += 1
