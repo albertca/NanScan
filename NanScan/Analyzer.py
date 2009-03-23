@@ -51,9 +51,7 @@ class Analyzer:
 
 	# Spawn process and return STDOUT
 	def spawn(self, command, *args):
-		print "Started: ", command
 		command = [ command ] + list( args )
 		process = subprocess.Popen( command , stdout=subprocess.PIPE )
 		content = process.communicate()[0]
-		print "Finished: ", command
 		return content
