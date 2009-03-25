@@ -29,7 +29,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.uic import *
 from Koo import Rpc
-from Koo.Model.Group import ModelRecordGroup
+from Koo.Model.Group import RecordGroup
 from Koo.Model.KooModel import KooModel
 
 class OpenTemplateDialog(QDialog):
