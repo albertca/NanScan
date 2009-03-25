@@ -49,6 +49,9 @@ class InvoiceRecognizer:
 				u'factura num.',
 				u'nº factura',
 				u'factura núm.',
+				u'factura núm .',
+				u'factura núm',
+				u'factura num',
 				u'factura',
 				u'número de factura'
 			],
@@ -179,12 +182,15 @@ class InvoiceRecognizer:
 		#ran = sameDistance[-1]
 		ranges.sort( rangeDistanceLengthRatioComparison )
 		print "RANGES FOR TAG: %s\n%s" % ( tag, [ran.text().encode('ascii','replace') for ran in ranges[:20]] )
+		value = None
 		for ran in ranges[:5]:
 			print "RANGE FOR TAG %s: %s" % ( tag, ran.text().encode('ascii','ignore') )
 			value = self.findTagValueFromRange( tag, ran )
 			if value:
-				return value
-		return None
+				break
+		if (not value) and ('fallback' in InvoiceRecognizer.Tags[ tag ]):
+			value = InvoiceRecognizer.Tags[ tag ]['fallback']( self )
+		return value
 
 	def findTagValueFromRange(self, tag, ran):
 
@@ -194,9 +200,7 @@ class InvoiceRecognizer:
 		rightValue = Block.extractAllBlocksFromDocument( [ line ] )[0].text()
 
 
-		#print "R: ", line[ran.pos+ran.length+1:].strip().encode('ascii','ignore')
 		print "rightValue: ", rightValue.encode('ascii','replace')
-		#print "SAME LINE: ", line.encode('ascii','ignore')
 
 		# Extract text on the bottom
 		if ran.line < len(self.textLines)-1:
@@ -243,7 +247,5 @@ class InvoiceRecognizer:
 		else:
 			value = rightValue
 
-		if not value and 'fallback' in InvoiceRecognizer.Tags[ tag ]:
-			value = InvoiceRecognizer.Tags[ tag ]['fallback']( self )
 		return value
 
