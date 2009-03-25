@@ -52,14 +52,16 @@ def isDate( value ):
 
 def textToDate( value ):
 	value = value.replace(' ','')
+	# Replace '.' with '/' as QDate.fromString() doesn't like patterns
+	# with dots in it. At the same time do the same with dashes. It's
+	# faster to replace than to try to convert to QDate.
+	value = value.replace('.','/')
+	value = value.replace('-','/')
 	value = textMonthToNumber( value )
 	# Replace texts for cases such as '25 de juny de 2009'
 	value = re.sub( r'[a-z]', '', value )
 	value = re.sub( r'[A-Z]', '', value )
-	patterns = [
-		'dd/MM/yyyy', 'dd-MM-yyyy', 'dd/MM/yy', 'dd-MM-yy', 
-		'd/MM/yyyy', 'd-MM-yyyy', 'd/MM/yy', 'd-MM-yy',
-		'dd.mm.yyyy', 'dd.mm.yy', 'd.mm.yyyy', 'd.mm.yy']
+	patterns = [ 'dd/MM/yyyy', 'dd/MM/yy', 'd/MM/yyyy', 'd/MM/yy' ]
 	for pattern in patterns:
 		date = QDate.fromString( value, pattern )
 		if date.isValid():
@@ -151,6 +153,11 @@ def textToPageNumber( text ):
 		current = textToFloat( blocks[0] )
 	if len(blocks) > 1:
 		total = textToFloat( blocks[1] )
+
+	if current > 100:
+		current = None
+	if total > 100:
+		total = None
 	if current:
 		return (current, total)
 	else:
