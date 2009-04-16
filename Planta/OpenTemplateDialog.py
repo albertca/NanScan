@@ -44,7 +44,7 @@ class OpenTemplateDialog(QDialog):
 		ids = Rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
 		self.group = RecordGroup( 'nan.template', self.fields, ids )
 		self.treeModel = KooModel( self )
-		self.treeModel.setModelGroup( self.group )
+		self.treeModel.setRecordGroup( self.group )
 		self.treeModel.setFields( self.fields )
 		self.treeModel.setShowBackgroundColor( False )
 		self.treeModel.setMode( KooModel.ListMode )
