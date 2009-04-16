@@ -83,7 +83,7 @@ class TemplateStorageManager:
 			'feature_height', 'name', 'text', 'recognizer', 'type', 'filter' ]
 		boxFields = Rpc.session.execute('/object', 'execute', 'nan.template.box', 'fields_get', fields)
 		ids = Rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
-		group = ModelRecordGroup( 'nan.template', templateFields, ids )
+		group = RecordGroup( 'nan.template', templateFields, ids )
 		templates = []
 		for record in group:
 			template = Template( record.value('name') )	

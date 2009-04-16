@@ -42,7 +42,7 @@ class OpenTemplateDialog(QDialog):
 		print 'open: ', Rpc.session
 		self.fields = Rpc.session.execute('/object', 'execute', 'nan.template', 'fields_get', visible)
 		ids = Rpc.session.execute('/object', 'execute', 'nan.template', 'search', [])
-		self.group = ModelRecordGroup( 'nan.template', self.fields, ids )
+		self.group = RecordGroup( 'nan.template', self.fields, ids )
 		self.treeModel = KooModel( self )
 		self.treeModel.setModelGroup( self.group )
 		self.treeModel.setFields( self.fields )
