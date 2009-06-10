@@ -3,7 +3,7 @@
 #
 #   This program is free software; you can redistribute it and/or modify 
 #   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or 
+#   the Free Software Foundation; either version 3 of the License, or 
 #   (at your option) any later version. 
 #
 #   This program is distributed in the hope that it will be useful, 
@@ -18,118 +18,23 @@
 
 
 from PyQt4.QtCore import *
+from AbstractBlock import *
+from SimpleBlock import *
 
-def boxComparison(x, y):
-	if x.box.x() > y.box.x():
-		return 1
-	elif x.box.x() < y.box.x():
-		return -1
-	else:
-		return 0
-
-def blockDistanceComparison(x, y):
-	if x.distance > y.distance:
-		return 1
-	elif x.distance < y.distance:
-		return -1
-	else:
-		return 0
-
-def blockSizeComparison(x, y):
-	xRect = x.rect()
-	yRect = y.rect()
-	xt = len( xRect.width() * xRect.height() )
-	yt = len( yRect.width() * yRect.height() )
-	if xt > yt:
-		return 1
-	elif xt < yt:
-		return -1
-	else:
-		return 0
-
-class Character:
-	def __init__(self):
-		self.character = None
-		self.box = None
 
 ## @brief This class represents a group of characters in a document.
-class Block:
-	slimCharacters = 'iIl1.,; '
-
+class Block(AbstractBlock):
 	def __init__(self):
-		self.document = None
-		self._boxes = []
-		self.outerDistance = 2.5
-		self._rect = None
-		self._outerRect = None
-	
-	def setBoxes(self, boxes):
-		self._boxes = boxes
-		self.invalidateCache()
-
-	def boxes(self):
-		return self._boxes
-
-	def addBox(self, box):
-		self._boxes.append( box )
-		self.invalidateCache()
-
-	def removeBox(self, box):
-		self._boxes.remove( box )
-		self.invalidateCache()
-
-	def count(self):
-		return len(self._boxes)
+		AbstractBlock.__init__(self)
 
 	## @brief Returns a unicode string with the text of the current range
 	def text(self):
 		return self.formatedText()
 
-	def invalidateCache(self):
-		self._rect = None
-		self._outerRect = None
-
-	## @brief Returns the bounding rectangle of the text in the range
-	def rect(self):
-		# If we have the value in the cache use it.
-		if self._rect:
-			return self._rect
-		self._rect = QRectF()
-		for c in self._boxes:
-			self._rect = self._rect.united( c.box )
-		return self._rect
-
-	## @brief Returns a bounding rectangle of the text in the block that is 'outerDistance'
-	# larger in all sides.
-	def outerRect(self):
-		if self._outerRect:
-			return self._outerRect
-		rect = self.rect()
-		rect.translate( - self.outerDistance, - self.outerDistance )
-		rect.setWidth( rect.width() + self.outerDistance * 2.0 )
-		rect.setHeight( rect.height() + self.outerDistance * 2.0 )
-		self._outerRect = rect
-		return rect
-
 	## @brief Returns a list with all possible ranges of size length of the 
 	# given document
 	@staticmethod
 	def extractAllBlocksFromDocument(lines, distance=0):
-		#blocks = []
-		#for line in lines:
-			#for char in line:
-				#blockFound = False
-				#for block in blocks:
-					#if block.outerRect().intersects( char.box ):
-						#block.addBox( char )
-						#blockFound = True
-						#break
-				#if not blockFound:
-					#block = Block()
-					#block.addBox( char )
-					#block.document = lines
-					#blocks.append( block )
-
 		# Find initial blocks.
 		blocks = []
 		for line in lines:
@@ -141,12 +46,6 @@ class Block:
 					block.addBox( char )
 				else:
 					avgWidth = block.rect().width() / block.count()
-					#print "BLOCK: ", block.text().encode('ascii','ignore')
-					#print "BLOCK WIDTH: ", block.rect().width()
-					#print "BLOCK COUNT: ", block.count()
-					#print "BLOCK AVGWIDTH: ", avgWidth
-					#print "CHAR WIDTH: ", char.box.width()
-					#print "===="
 					if char.box.width() > avgWidth * 1.5:
 						block = Block()
 						block.document = lines
@@ -171,9 +70,6 @@ class Block:
 					break
 		return blocks
 
-	def merge(self, block):
-		for box in block._boxes:
-			self._boxes.append( box )
 
 	## @brief Obtains top most box of the given list
 	def topMostBox(self, boxes):
@@ -228,149 +124,16 @@ class Block:
 				boxes.remove( x )
 			lines.append( line )
 
-		# Now that we have all boxes in its line. Sort each of
-		# them
+		blockLines = []
+		# Now that we have all boxes in its line. 
+		# Create a SimpleBlock per line and sort them.
 		for line in lines:
-			line.sort( boxComparison )
-		return lines
+			block = SimpleBlock()
+			block.setBoxes( line )
+			block.sort()
+			blockLines.append( block )
 
-	def meanCharacterWidth(self, line):
-		# Calculate mean char width
-		width = 0.0
-		for c in line:
-			if not c.character in Block.slimCharacters:
-				width += c.box.width()
-		width = width / len(line)
-		return width
-
-	def distancesBetweenCharacterCenters(self, line):
-		width = self.meanCharacterWidth(line)
-		previousCenter = None
-		previousRight = None
-		distance = 0.0
-		distances = []
-		for c in line:
-			if previousCenter and not ignorePrevious:
-				# If separation is bigger than mean char width
-				# we can consider "for sure" it's another word.
-				if c.box.x() - previousRight < width and ( not c.character in Block.slimCharacters ):
-					distances.append( c.box.center().x() - previousCenter )
-					distance += distances[-1]
-			previousCenter = c.box.center().x()
-			previousRight = c.box.right()
-			if c.character in Block.slimCharacters:
-				ignorePrevious = True
-			else:
-				ignorePrevious = False
-
-		if not distance:
-			return None
-		#return distance / len(distances)
-		return (distance, distances)
-
-
-	def meanDistanceBetweenCharacterCenters(self, line):
-		d = self.distancesBetweenCharacterCenters(line)
-		if not d:
-			return None
-		return d[0] / len( d[1] )
-
-	def deviationDistanceBetweenCharacterCenters(self, line):
-		d = self.distancesBetweenCharacterCenters(line)
-		if not d:
-			return None
-		distances = d[1]
-		mean = d[0] / len( distances )
-		m = 0.0
-		for x in distances:
-			m += abs( x - mean )
-		m = ( m / len(distances) ) / mean 
-		return m
-
-	def isFixedPitchFont(self, line):
-		if len(line) == 0:
-			return False
-
-		m = self.deviationDistanceBetweenCharacterCenters(line)
-		if not m:
-			return False
-		if m < 0.1:
-			return True
-		else:
-			return False
-
-
-	## @brief This function adds spaces between words of a single line of boxes.
-	def textLineWithSpaces(self, line):
-		width = 0
-		count = 0
-		left = None
-		words = []
-		blocks = []
-		averageWidth = []
-		# First let's try to find average char width
-		for c in line:
-			if left:
-				if c.box.left() - left > ( width / count ) * 2:
-					blocks.append( count )
-					averageWidth.append( width / count )
-			left = c.box.right()
-			width += c.box.width()
-			count += 1
-		blocks.append( count )
-		averageWidth.append( width / count )
-
-		# TODO: Calculate fixedPitch in a per block basis, just like average char width
-		fixedPitch = self.isFixedPitchFont( line )
-		meanDistance = self.meanDistanceBetweenCharacterCenters( line )
-
-		width = 0
-		count = 0
-		left = None
-		center = None
-		spacesToAdd = []
-		words = []
-		currentBlock = 0
-		for c in line:
-			if count > blocks[currentBlock]:
-				currentBlock += 1
-			if left:
-				# We act differently if font is has fixedPitch or not.
-				if fixedPitch:
-					if c.box.center().x() - center > meanDistance * 1.15:
-						if spacesToAdd:
-							words.append( line[spacesToAdd[-1]:count] )
-						spacesToAdd.append( count )
-				else:
-					# WITH TESSERACT: 1 * 0.333
-					# If separtion between previous and current char
-					# is greater than a third of the average character
-					# width we'll add a space.
-					#
-					# WITH CUNEIFORM: 1 * 0.4
-					#if c.box.left() - left > ( width / count ) * 0.4:
-					if c.box.left() - left > averageWidth[currentBlock] * 0.4:
-						if spacesToAdd:
-							words.append( line[spacesToAdd[-1]:count] )
-						spacesToAdd.append( count )
-
-			left = c.box.right()
-			center = c.box.center().x()
-			width += c.box.width()
-			count += 1
-
-		# Reverse so indexes are still valid after insertions
-		spacesToAdd.reverse()
-		previousIdx = None
-		for idx in spacesToAdd:
-			c = Character()
-			c.character = u' '
-			c.box = QRectF()
-			c.box.setTop( line[idx - 1].box.top() )
-			c.box.setBottom( line[idx - 1].box.bottom() )
-			c.box.setLeft( line[idx - 1].box.right() )
-			c.box.setRight( line[idx].box.left() )
-			line.insert( idx, c )
+		return blockLines
 
 
 	## @brief This function is similar to textLines() but adds spaces between words.
@@ -386,9 +149,8 @@ class Block:
 		# width of the letters on a per line basis. This shows good 
 		# results, by now, on text with the same char size in the line,
 		# which is quite usual.
-
 		for line in lines:
-			self.textLineWithSpaces( line )
+			line.addSpaces()
 		return lines
 
 		
@@ -398,7 +160,14 @@ class Block:
 		texts = []
 		for line in lines:
 			text = u''
-			for c in line:
+			for c in line.boxes():
 				text += c.character
 			texts.append(text)
 		return u'\n'.join( texts )
+
+	## @brief Returns a copy of the current block, optionally picking only
+	# boxes in the given region.
+	def copy(self, region=None):
+		block = Block()
+		block.setBoxes( self.boxesInRegion( region ) )
+		return block

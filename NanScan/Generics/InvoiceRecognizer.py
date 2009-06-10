@@ -4,7 +4,7 @@
 #
 #   This program is free software; you can redistribute it and/or modify 
 #   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or 
+#   the Free Software Foundation; either version 3 of the License, or 
 #   (at your option) any later version. 
 #
 #   This program is distributed in the hope that it will be useful, 
@@ -205,7 +205,7 @@ class InvoiceRecognizer:
 		# Extract text on the bottom
 		if ran.line < len(self.textLines)-1:
 			line = self.textLines[ran.line+1]
-			print "NEXT LINE: ", self.formatedLine( self.textLines[ran.line+1] ).encode('ascii','ignore')
+			print "NEXT LINE: ", self.formatedLine( line ).encode('ascii','ignore')
 			boxBottom = ran.rect()
 			boxBottom.moveTop( line[0].box.y() )
 			bottomValue = u''

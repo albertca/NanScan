@@ -1,9 +1,9 @@
-#   Copyright (C) 2008 by Albert Cervera i Areny
+#   Copyright (C) 2008-2009 by Albert Cervera i Areny
 #   albert@nan-tic.com
 #
 #   This program is free software; you can redistribute it and/or modify 
 #   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or 
+#   the Free Software Foundation; either version 3 of the License, or 
 #   (at your option) any later version. 
 #
 #   This program is distributed in the hope that it will be useful, 
@@ -131,8 +131,9 @@ class Ocr(Analyzer):
 		lines = self.block.textLinesWithSpaces( region )
 		rect = QRectF()
 		for line in lines:
-			for c in line:
-				rect = rect.united( c.box )
+			rect = rect.united( line.boundingRect() )
+			#for c in line:
+				#rect = rect.united( c.box )
 		return rect	
 
 	## @brief Uses ImageMagick's 'convert' application to convert the given image 
@@ -161,18 +162,18 @@ class Ocr(Analyzer):
 		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
 		# Tesseract Steps
-		#self.file = TemporaryFile.create('.tif') 
-		#self.convertToGrayScale(image, self.file)
-		#txt = lower( self.tesseract() )
-		#self.boxes = self.parseTesseractOutput(txt)
+		self.file = TemporaryFile.create('.tif') 
+		self.convertToGrayScale(image, self.file)
+		txt = lower( self.tesseract() )
+		self.boxes = self.parseTesseractOutput(txt)
 
 		# Cuneiform Steps
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
-		self.file = TemporaryFile.create( '.bmp' )
-		image.save( self.file )
-		txt = lower( self.cuneiform() )
-		self.boxes = self.parseCuneiformOutput(txt)
+		#self.file = TemporaryFile.create( '.bmp' )
+		#image.save( self.file )
+		#txt = lower( self.cuneiform() )
+		#self.boxes = self.parseCuneiformOutput(txt)
 
 		self.block = Block()
 		self.block.setBoxes( self.boxes )
