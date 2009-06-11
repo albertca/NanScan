@@ -84,7 +84,7 @@ class Barcode(Analyzer):
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
 		image.save( file, 'BMP' )
-		command = '/home/albert/d/git/exact-image-0.5.0/objdir/frontends/bardecode'
+		command = 'bardecode'
 		content = self.spawn( command, file )
 		self.parseBardecodeOutput( content )
 		self.printBoxes()

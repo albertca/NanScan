@@ -82,7 +82,7 @@ class Ocr(Analyzer):
 	def cuneiform(self):
 		directory = tempfile.mkdtemp()
 		path = os.path.join( directory, 'cuneiform.txt' )
-		os.spawnlpe(os.P_WAIT, '/home/albert/d/git/cuneiform/bin/cuneiform', '/home/albert/d/git/cuneiform/bin/cuneiform', '-l', 'spa', '-f', 'hocr', '-o', path, self.file, {'LD_LIBRARY_PATH': '/home/albert/d/git/cuneiform/lib'} )
+		os.spawnlpe(os.P_WAIT, 'cuneiform', 'cuneiform', '-l', 'spa', '-f', 'hocr', '-o', path, self.file )
 		f=codecs.open(path, 'r', 'utf-8', errors='ignore')
 		content = f.read()
 		f.close()

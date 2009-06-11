@@ -1,6 +1,7 @@
 import poppler
+import sys
 
-document = poppler.document_new_from_file ('file:///home/albert/prog/empresa/info/pla-empresa/empresa.pdf', None)
+document = poppler.document_new_from_file(sys.argv[1], None)
 #self.document = poppler.document_new_from_file (uri, None)
 print "PAGES: ", document.get_n_pages()
 print "SIZE: ", current_page.get_size()
