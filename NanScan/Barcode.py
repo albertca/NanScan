@@ -31,6 +31,7 @@ class Box:
 		self.type = None
 		self.position = None
 
+## @brief Scans an image for barcodes.
 class Barcode(Analyzer):
 	def __init__(self):
 		self.boxes = []
