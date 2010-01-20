@@ -36,7 +36,7 @@ class Scanner(QObject):
 		self.duplex = False
 
 	def listDevices(self):
-		scan = BlockingScanner(self)
+		scan = ScannerBackend(self)
 		devices = scan.listDevices()
 		scan.close()
 		return devices
