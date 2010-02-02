@@ -92,6 +92,7 @@ class SynchronousScanner(QObject):
 				return Common.ScannerError.AcquisitionError
 			self.emit( SIGNAL('scanned(QImage)'), image )
 		self.source = None
+		self.emit( SIGNAL('finished()') )
 
 	def next(self):
 		try:
