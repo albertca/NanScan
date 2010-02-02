@@ -61,8 +61,14 @@ class ScanDialog(QDialog):
 		# By default images are stored as files in 
 		# the temporary directory. The application
 		# may choose to override the 'thread' propery
-		# with an appropiate SaveThreaded() subclass
-		self.saveClass = FileSaveThreaded
+		# with an appropiate AbstractImageSaver() subclass
+		self._imageSaverFactory = FileImageSaverFactory()
+
+	def setImageSaverFactory(self, imageSaverFactory):
+		self._imageSaverFactory = imageSaverFactory
+
+	def imageSaverFactory(self):
+		return self._imageSaverFactory
 
 	def closeEvent(self, event):
 		if self.hasFinished:
@@ -136,8 +142,8 @@ class ScanDialog(QDialog):
 		self.uiList.addItem( item )
 
 		self.addSaving()
-		if self.saveClass:
-			thread = self.saveClass( self )
+		if self._imageSaverFactory:
+			thread = self._imageSaverFactory.create( self )
 			thread.item = item
 			self.connect( thread, SIGNAL('finished()'), self.saved )
 			thread.start()
@@ -160,33 +166,45 @@ class ScanDialog(QDialog):
 		thread.item.image = None
 		gc.collect()
 
-
-
-## @brief Base class for saving the image once scanned.
-class SaveThreaded(QThread):
+## @brief Abstract class for saving the image once scanned.
+class AbstractImageSaver(QThread):
 	def __init__(self, parent=None):
 		QThread.__init__(self, parent)
 		self.item = None
 		self.error = True
 
+## @brief Abstract factory class for creating image savers.
+class AbstractImageSaverFactory:
+	def create(self, parent):
+		return AbstractImageSaver( parent )
+
 ## @brief This class stores an image into a file in the directory
 # specified by 'directory' (temporary directory by default).
-class FileSaveThreaded(SaveThreaded):
+class FileImageSaver(AbstractImageSaver):
 	directory = unicode( QDir.tempPath() )
 
 	def run(self):
 		self.error = True
-		d = QDir( FileSaveThreaded.directory )
+		d = QDir( FileImageSaver.directory )
 		d.setSorting( QDir.Name )
 		l = d.entryList( ['*.png'] )
 		if l:
 			last = l[-1]
 			last = last.split('.')[0]
-			last = int(last)
+			try:
+				last = int(last)
+			except:
+				last = 0
 		else:
 			last = 0
 		next = "%06d.png" % (last + 1)
-		next = os.path.join( FileSaveThreaded.directory, next )
+		next = os.path.join( FileImageSaver.directory, next )
 		print "saving: ", next
 		if self.item.image.save( next, 'PNG' ):
 			self.error = False
+
+## @brief This class creates a FileImageSaver.
+class FileImageSaverFactory(AbstractImageSaverFactory):
+	def create(self, parent):
+		return FileImageSaver( parent )
+
