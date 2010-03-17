@@ -1,4 +1,12 @@
-import twain, struct, string
+import sys
+
+if sys.version_info[:2] == (2, 5):
+	import twain25 as twain 
+else:
+	import twain26 as twain
+
+import struct
+import string
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import Common
