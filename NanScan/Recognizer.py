@@ -113,6 +113,8 @@ class Recognizer(QObject):
 			return u''.join( [x for x in value if x in numeric+alphabetic] )
 		elif filterType == 'none':
 			return value
+		elif filterType == 'exists':
+			return value and '1' or '0'
 		else:
 			print "Filter type '%s' not implemented" % filterType
 			return value
@@ -128,9 +130,6 @@ class Recognizer(QObject):
 			return None
 		document = Document()
 		for templateBox in template.boxes:
-			if not templateBox.text:
-				continue
-
 			rect = QRectF( templateBox.rect )
 			rect.translate( xOffset, yOffset )
 
@@ -177,8 +176,11 @@ class Recognizer(QObject):
 						matcherBoxes += 1
 						similarity = Trigram.trigram( documentBox.text, templateBox.text )
 						score += similarity
-					score = score / matcherBoxes
-					if score > max:
+
+					if matcherBoxes:
+						score = score / matcherBoxes
+
+					if score > max or not matcherBoxes:
 						max = score
 						best = { 
 							'template': template,

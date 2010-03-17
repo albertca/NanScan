@@ -37,7 +37,7 @@ class Template(QObject):
 class TemplateBox:
 	recognizers = ['text', 'barcode', 'dataMatrix']
 	types = ['matcher','input']
-	filters = ['none','numeric','alphabetic','alphanumeric']
+	filters = ['none','exists','numeric','alphabetic','alphanumeric']
 
 	def __init__(self):
 		self.rect = QRectF()
