@@ -50,6 +50,16 @@ class Barcode(Analyzer):
 			box.position = QPointF( x, y )
 			self.boxes.append( box )
 
+	def parseZBarImgOutput(self, content):
+		# Sample output "CODE-39:00017"
+		for line in content.splitlines():
+			pieces = line.split(':')
+			box = Box()
+			box.text = lower(pieces[0])
+			box.type = pieces[1]
+			box.position = QPointF()
+			self.boxes.append( box )
+
 	def printBoxes(self):
 		for x in self.boxes:
 			print "Text: %s, Type: %s, Position: %f, %f" % (x.text, x.type, x.position.x(), x.position.y())
@@ -72,7 +82,7 @@ class Barcode(Analyzer):
 		return rect
 
 	## @brief Scans the given image (QImage) looking for barcodes.
-	def scan(self, image):
+	def scanBardecode(self, image):
 		# Clean boxes so scan() can be called more than once
 		self.boxes = []
 
@@ -88,6 +98,26 @@ class Barcode(Analyzer):
 		command = 'bardecode'
 		content = self.spawn( command, file )
 		self.parseBardecodeOutput( content )
+		self.printBoxes()
+
+	## @brief Scans the given image (QImage) looking for barcodes.
+	def scan(self, image):
+		# Clean boxes so scan() can be called more than once
+		self.boxes = []
+
+		# Obtain image resolution
+		image = QImage( image )
+		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
+		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
+
+		fileName = TemporaryFile.create( '.bmp' )
+		print "FILE: ", fileName
+		# Use BMP format instead of PNG, for performance reasons. 
+		# BMP takes about 0.5 seconds whereas PNG takes 13.
+		print image.save( fileName, 'BMP' )
+		command = 'zbarimg'
+		content = self.spawn( command, fileName )
+		self.parseZBarImgOutput( content )
 		self.printBoxes()
 
 Analyzer.registerAnalyzer( 'barcode', Barcode )
