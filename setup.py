@@ -128,7 +128,7 @@ setup (
 	license          = 'GPL',
         data_files       = [
                 (opj('lib','site-packages','NanScan','Backends'),[opj('NanScan','Backends','twain.pyd')]),
-#                (opj('lib','site-packages','NanScan','Backends'),[opj('NanScan','Backends','twain26.pyd')])
+                (opj('lib','site-packages','NanScan'),[opj('NanScan','ScanDialog.ui')])
         ],
 	scripts          = script_files,
 	windows          = [{
