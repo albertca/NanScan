@@ -47,7 +47,14 @@ class ScanDialog(QDialog):
         def __init__(self, parent=None):
                 QDialog.__init__(self, parent)
 		
-		dir = os.path.abspath( os.path.dirname(__file__) )
+		dirs = [
+			os.path.abspath( os.path.dirname(__file__) ),
+			'/usr/lib/site-packages/NanScan',
+		]
+		for dir in dirs:
+			if os.path.exists( os.path.join(dir, 'ScanDialog.ui') ):
+				break
+
 		QResource.registerResource( os.path.join(dir,'common.rcc') )
 		loadUi( os.path.join(dir,'ScanDialog.ui'), self )
 
