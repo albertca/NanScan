@@ -55,9 +55,9 @@ class Barcode(Analyzer):
 		for line in content.splitlines():
 			pieces = line.split(':')
 			box = Box()
-			box.text = lower(pieces[0])
-			box.type = pieces[1]
-			box.position = QPointF()
+			box.text = lower(pieces[1])
+			box.type = pieces[0]
+			box.position = QPointF(0.0, 0.0)
 			self.boxes.append( box )
 
 	def printBoxes(self):
@@ -111,7 +111,6 @@ class Barcode(Analyzer):
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
 		fileName = TemporaryFile.create( '.bmp' )
-		print "FILE: ", fileName
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
 		print image.save( fileName, 'BMP' )
