@@ -28,7 +28,7 @@ from TemporaryFile import *
 from Analyzer import *
 from Block import *
 
-from gamera.core import *
+#from gamera.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -230,8 +230,8 @@ Analyzer.registerAnalyzer( 'text', Ocr )
 
 ## @brief Initializes OCR functions that need to be executed once before the library
 # can work. Currently only initiates Gamera which is not being used by now.
-def initOcrSystem():
-	init_gamera()
+#def initOcrSystem():
+	#init_gamera()
 
 
 ## @brief This function calculates the linearRegression from a list of points.
