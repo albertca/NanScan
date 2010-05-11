@@ -136,11 +136,11 @@ class DataMatrix(Analyzer):
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
 		image.save( file, 'BMP' )
 		command = 'dmtxread'
-		content = self.spawn( command, '-n', '-v', file )
+		content = self.spawn( command, '--newline', '--verbose', '--milliseconds=1000', file )
 		self.parseOutput( content )
 		self.printBoxes()
 
-#Analyzer.registerAnalyzer( 'dataMatrix', DataMatrix )
+Analyzer.registerAnalyzer( 'dataMatrix', DataMatrix )
 
 if __name__ == '__main__':
 	d = DataMatrix()
