@@ -9,9 +9,6 @@ import gc
 locale.setlocale(locale.LC_ALL, '')
 gettext.bindtextdomain('nanscan', '.')
 gettext.textdomain('nanscan')
-gettext.install('nanscan', '.', unicode=1)
-
-
 
 class ImageItem(QListWidgetItem):
 	def __init__(self, parent=None):
@@ -145,7 +142,7 @@ class ScanDialog(QDialog):
 		item.setImage( image ) 
 		item.setMark( QImage( ':/images/images/save.png' ) )
 		item.setName( 'scanned image ' + unicode( QDateTime.currentDateTime().toString() ) )
-		item.setToolTip( _('Saving image...') )
+		item.setToolTip( gettext.gettext('nanscan','Saving image...') )
 
 		self.uiList.addItem( item )
 
@@ -165,10 +162,10 @@ class ScanDialog(QDialog):
 
 		if not thread.error:
 			thread.item.setMark( QImage( ':/images/images/ok.png' ) )
-			thread.item.setToolTip( _('Image stored successfully') )
+			thread.item.setToolTip( gettext.gettext('nanscan','Image stored successfully') )
 		else:
 			thread.item.setMark( QImage( ':/images/images/cancel.png' ) )
-			thread.item.setToolTip( _('Error storing image') )
+			thread.item.setToolTip( gettext.gettext('nanscan','Error storing image') )
 			
 		# Free memory used by the BIG image
 		thread.item.image = None

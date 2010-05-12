@@ -28,7 +28,6 @@ from TemporaryFile import *
 from Analyzer import *
 from Block import *
 
-#from gamera.core import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -41,13 +40,17 @@ class Ocr(Analyzer):
 
 	## @brief Uses tesseract to recognize text of the current image.
 	def tesseract(self):
-		directory = tempfile.mkdtemp()
-		path = os.path.join( directory, 'tesseract' )
-		self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
-		f=codecs.open(path + '.txt', 'r', 'utf-8')
-		content = f.read()
-		f.close()
-		shutil.rmtree(directory, True)
+		try:
+			directory = tempfile.mkdtemp()
+			path = os.path.join( directory, 'tesseract' )
+			self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
+			f=codecs.open(path + '.txt', 'r', 'utf-8')
+			content = f.read()
+			f.close()
+			shutil.rmtree(directory, True)
+		except IOError, e:
+			print "Input/Output error. Probably data was not a valid image: '%s'" % str(e)
+			content = ''
 		return content
 
 	## @brief Parses tesseract output creating a list of Character objects.
@@ -227,11 +230,6 @@ class Ocr(Analyzer):
 				self.deskewOnce( self, region )
 
 Analyzer.registerAnalyzer( 'text', Ocr )
-
-## @brief Initializes OCR functions that need to be executed once before the library
-# can work. Currently only initiates Gamera which is not being used by now.
-#def initOcrSystem():
-	#init_gamera()
 
 
 ## @brief This function calculates the linearRegression from a list of points.

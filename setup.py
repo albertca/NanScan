@@ -129,7 +129,7 @@ setup (
         data_files       = [
                 (opj('lib','site-packages','NanScan','Backends'),[opj('NanScan','Backends','twain.pyd')]),
                 (opj('lib','site-packages','NanScan'),[opj('NanScan','ScanDialog.ui')]),
-                (opj('lib','site-packages','NanScan'),[opj('NanScan','Common.rcc')]),
+                (opj('lib','site-packages','NanScan'),[opj('NanScan','common.rcc')]),
         ],
 	scripts          = script_files,
 	windows          = [{

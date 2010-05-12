@@ -77,23 +77,29 @@ class Recognizer(QObject):
 		return self.analyzers.keys()
 		
 	# Synchronous
-	def recognize(self, image):
+	def recognize(self, image, analyzers=None):
 		self.image = image
-		for analyzer in self.analyzers.values():
-			analyzer.scan( image )
-		#self.barcode.scan( image )
-		#self.ocr.scan( image )
+
+		if analyzers is None:
+			analyzers = self.analyzers.keys()
+
+		for analyzer in analyzers:
+			self.analyzers[analyzer].scan( image )
 
 	## @brief Asynchronous: Starts analyzers in background threads. Emits finished() at the end
-	def startRecognition(self, image):
+	def startRecognition(self, image, analyzers=None):
 		self.image = image
 		self.threads = []
-		for analyzer in self.analyzers.values():
-			thread = Analyze( analyzer, image, self )
+
+		if analyzers is None:
+			analyzers = self.analyzers.keys()
+
+		for analyzer in analyzers:
+			thread = Analyze( self.analyzers[analyzer], image, self )
 			self.connect( thread, SIGNAL('finished()'), self.recognitionFinished )
 			self.threads.append( thread )
 			thread.start()
-		
+
 	def recognitionFinished(self):
 		print "THREAD FINISHED"
 		for thread in self.threads:
@@ -113,6 +119,8 @@ class Recognizer(QObject):
 			return u''.join( [x for x in value if x in numeric+alphabetic] )
 		elif filterType == 'none':
 			return value
+		elif filterType == 'exists':
+			return value and '1' or '0'
 		else:
 			print "Filter type '%s' not implemented" % filterType
 			return value
@@ -128,9 +136,6 @@ class Recognizer(QObject):
 			return None
 		document = Document()
 		for templateBox in template.boxes:
-			if not templateBox.text:
-				continue
-
 			rect = QRectF( templateBox.rect )
 			rect.translate( xOffset, yOffset )
 
@@ -177,8 +182,11 @@ class Recognizer(QObject):
 						matcherBoxes += 1
 						similarity = Trigram.trigram( documentBox.text, templateBox.text )
 						score += similarity
-					score = score / matcherBoxes
-					if score > max:
+
+					if matcherBoxes:
+						score = score / matcherBoxes
+
+					if score > max or not matcherBoxes:
 						max = score
 						best = { 
 							'template': template,
