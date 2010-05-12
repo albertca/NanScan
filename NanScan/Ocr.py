@@ -40,13 +40,17 @@ class Ocr(Analyzer):
 
 	## @brief Uses tesseract to recognize text of the current image.
 	def tesseract(self):
-		directory = tempfile.mkdtemp()
-		path = os.path.join( directory, 'tesseract' )
-		self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
-		f=codecs.open(path + '.txt', 'r', 'utf-8')
-		content = f.read()
-		f.close()
-		shutil.rmtree(directory, True)
+		try:
+			directory = tempfile.mkdtemp()
+			path = os.path.join( directory, 'tesseract' )
+			self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
+			f=codecs.open(path + '.txt', 'r', 'utf-8')
+			content = f.read()
+			f.close()
+			shutil.rmtree(directory, True)
+		except IOError, e:
+			print "Input/Output error. Probably data was not a valid image: '%s'" % str(e)
+			content = ''
 		return content
 
 	## @brief Parses tesseract output creating a list of Character objects.
