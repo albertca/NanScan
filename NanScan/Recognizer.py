@@ -142,6 +142,7 @@ class Recognizer(QObject):
 			text = self.textInRegion( rect, templateBox.recognizer )
 			text = self.filter( text, templateBox.filter )
 			documentBox = DocumentBox()
+			documentBox.name = templateBox.name
 			documentBox.text = text
 			documentBox.templateBox = templateBox
 			document.addBox( documentBox )
