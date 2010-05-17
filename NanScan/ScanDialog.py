@@ -47,6 +47,7 @@ class ScanDialog(QDialog):
 		dirs = [
 			os.path.abspath( os.path.dirname(__file__) ),
 			'/usr/lib/site-packages/NanScan',
+			os.path.join( 'share', 'NanScan' ),
 		]
 		for dir in dirs:
 			if os.path.exists( os.path.join(dir, 'ScanDialog.ui') ):
