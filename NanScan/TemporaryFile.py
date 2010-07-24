@@ -36,5 +36,5 @@ class TemporaryFile:
 	## @brief Remove the given file
 	@staticmethod
 	def remove(path):
-		os.unlink(pathe
+		os.unlink(path)
 
