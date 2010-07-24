@@ -91,12 +91,13 @@ class Barcode(Analyzer):
 		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
-		file = TemporaryFile.create()
+		fileName = TemporaryFile.create()
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
-		image.save( file, 'BMP' )
+		image.save( fileName, 'BMP' )
 		command = 'bardecode'
-		content = self.spawn( command, file )
+		content = self.spawn( command, fileName )
+		TemporaryFile.remove( fileName )
 		self.parseBardecodeOutput( content )
 		self.printBoxes()
 
@@ -116,6 +117,7 @@ class Barcode(Analyzer):
 		print image.save( fileName, 'BMP' )
 		command = 'zbarimg'
 		content = self.spawn( command, fileName )
+		TemporaryFile.remove( fileName )
 		self.parseZBarImgOutput( content )
 		self.printBoxes()
 

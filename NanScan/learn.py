@@ -16,6 +16,7 @@ class GameraLearn:
 
 		print "Loading image with gamera..."
 		img = load_image( output )
+		TemporaryFile.remove( output )
 		print "Converting to greyscale..."
 		img = img.to_greyscale()
 		print "Thresholding..."

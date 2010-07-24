@@ -21,7 +21,6 @@ from PyQt4.QtGui import *
 # Do not import everything as Template is defined in string too
 from string import lower
 import os
-import tempfile
 from TemporaryFile import *
 from Analyzer import *
 
@@ -131,12 +130,13 @@ class DataMatrix(Analyzer):
 		self.dotsPerMillimeterX = float( image.dotsPerMeterX() ) / 1000.0
 		self.dotsPerMillimeterY = float( image.dotsPerMeterY() ) / 1000.0
 
-		file = TemporaryFile.create()
+		fileName = TemporaryFile.create()
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
-		image.save( file, 'BMP' )
+		image.save( fileName, 'BMP' )
 		command = 'dmtxread'
-		content = self.spawn( command, '--newline', '--verbose', '--milliseconds=10000', file )
+		content = self.spawn( command, '--newline', '--verbose', '--milliseconds=10000', fileName )
+		TemporaryFile.remove( fileName )
 		self.parseOutput( content )
 		self.printBoxes()
 

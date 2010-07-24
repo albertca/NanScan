@@ -39,14 +39,16 @@ class Ocr(Analyzer):
 	file = ""
 
 	## @brief Uses tesseract to recognize text of the current image.
-	def tesseract(self):
+	def tesseract(self, fileName):
 		try:
 			directory = tempfile.mkdtemp()
 			path = os.path.join( directory, 'tesseract' )
-			self.spawn( 'tesseract', self.file, path, '-l', 'spa', 'batch.nochop', 'makebox' )
+			self.spawn( 'tesseract', fileName, path, '-l', 'spa', 'batch.nochop', 'makebox' )
 			f=codecs.open(path + '.txt', 'r', 'utf-8')
-			content = f.read()
-			f.close()
+			try:
+				content = f.read()
+			finally:
+				f.close()
 			shutil.rmtree(directory, True)
 		except IOError, e:
 			print "Input/Output error. Probably data was not a valid image: '%s'" % str(e)
@@ -82,13 +84,15 @@ class Ocr(Analyzer):
 		return output
 
 	## @brief Uses cuneiform to recognize text of the current image.
-	def cuneiform(self):
+	def cuneiform(self, fileName):
 		directory = tempfile.mkdtemp()
 		path = os.path.join( directory, 'cuneiform.txt' )
-		os.spawnlpe(os.P_WAIT, 'cuneiform', 'cuneiform', '-l', 'spa', '-f', 'hocr', '-o', path, self.file )
+		os.spawnlpe(os.P_WAIT, 'cuneiform', 'cuneiform', '-l', 'spa', '-f', 'hocr', '-o', path, fileName )
 		f=codecs.open(path, 'r', 'utf-8', errors='ignore')
-		content = f.read()
-		f.close()
+		try:
+			content = f.read()
+		finally:
+			f.close()
 		shutil.rmtree(directory, True)
 		return content
 
@@ -145,6 +149,7 @@ class Ocr(Analyzer):
 		input = TemporaryFile.create( '.tif' ) 
 		image.save( input, 'TIFF' )
 		os.spawnlp(os.P_WAIT, 'convert', 'convert', '-type', 'grayscale', '-depth', '8', input, output)
+		TemporaryFile.remove( input )
 
 	## @brief Uses Gamera OTSU threashold algorithm to convert into binary
 	def convertToBinary(self, input, output):
@@ -165,18 +170,20 @@ class Ocr(Analyzer):
 		self.dotsPerMillimeterY = float( self.image.dotsPerMeterY() ) / 1000.0
 		
 		# Tesseract Steps
-		self.file = TemporaryFile.create('.tif') 
-		self.convertToGrayScale(image, self.file)
-		txt = lower( self.tesseract() )
+		fileName = TemporaryFile.create('.tif') 
+		self.convertToGrayScale(image, fileName)
+		txt = lower( self.tesseract(fileName) )
 		self.boxes = self.parseTesseractOutput(txt)
 
 		# Cuneiform Steps
 		# Use BMP format instead of PNG, for performance reasons. 
 		# BMP takes about 0.5 seconds whereas PNG takes 13.
-		#self.file = TemporaryFile.create( '.bmp' )
-		#image.save( self.file )
-		#txt = lower( self.cuneiform() )
+		#fileName = TemporaryFile.create( '.bmp' )
+		#image.save( fileName )
+		#txt = lower( self.cuneiform(fileName) )
 		#self.boxes = self.parseCuneiformOutput(txt)
+
+		TemporaryFile.remove( fileName )
 
 		self.block = Block()
 		self.block.setBoxes( self.boxes )

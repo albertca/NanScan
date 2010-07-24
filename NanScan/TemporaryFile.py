@@ -24,4 +24,17 @@ class TemporaryFile:
 		if not TemporaryFile.directory or not os.path.exists( TemporaryFile.directory ):
 			TemporaryFile.directory = tempfile.mkdtemp()
 		fd, name = tempfile.mkstemp( suffix=suffix, dir=TemporaryFile.directory )
+		os.close(fd)
 		return name
+
+	## @brief Removes all temporary files (and the temporary directory)
+	@staticmethod
+	def clear():
+		if TemporaryFile.directory:
+			shutils.rmtree( TemporaryFile.directory )
+
+	## @brief Remove the given file
+	@staticmethod
+	def remove(path):
+		os.unlink(pathe
+
