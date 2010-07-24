@@ -48,8 +48,10 @@ class Translator:
 		if not f:
 			print "File not found"
 			return txt
-		self.translations = f.readlines()
-		f.close()
+		try:
+			self.translations = f.readlines()
+		finally:
+			f.close()
 
 	## @brief Returns the given text replacing each character with the first 
 	# character of its family or itself if it's not in any character family.
